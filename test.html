@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <title>Truco Game</title>
+  <style>
+    .card {
+      width: 60px;
+      height: 90px;
+      background-size: cover;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+  <!-- Container -->
+  <div class="flex justify-center items-center h-screen">
+
+    <!-- Game Area -->
+    <div class="bg-brown-800 p-4 rounded-lg shadow-lg flex flex-col items-center relative" style="width: 800px; height: 600px;">
+
+      <!-- Header -->
+      <div class="w-full flex justify-between items-center mb-4">
+        <div>Team 1 Score: 6</div>
+        <div>Team 2 Score: 3</div>
+        <div>Trump: Jack</div>
+        <div>
+          Tricks:
+          <span class="inline-block w-4 h-4 bg-red-500 rounded-full"></span>
+          <span class="inline-block w-4 h-4 bg-green-500 rounded-full"></span>
+          <span class="inline-block w-4 h-4 bg-gray-500 rounded-full"></span>
+        </div>
+      </div>
+
+      <!-- Player and Cards -->
+      <div class="flex flex-col items-center">
+
+        <!-- Top Player -->
+        <div class="flex justify-center items-center mb-4">
+          <div class="flex flex-col items-center">
+            <div class="w-12 h-12 bg-gray-500 rounded-full mb-2"></div>
+            <div>RaptorPaws</div>
+          </div>
+        </div>
+
+        <!-- Cards on the table -->
+        <div class="flex justify-center items-center mb-4">
+          <div class="card bg-red-500 mx-2"></div>
+          <div class="card bg-red-500 mx-2"></div>
+          <div class="card bg-red-500 mx-2"></div>
+        </div>
+
+        <!-- Bottom Player and Cards -->
+        <div class="flex justify-center items-center">
+          <div class="flex flex-col items-center mx-4">
+            <div class="card bg-red-500 mb-2"></div>
+            <div>Coolguy1</div>
+          </div>
+          <div class="flex flex-col items-center mx-4">
+            <div class="card bg-red-500 mb-2"></div>
+            <div>FredBow</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Cards -->
+      <div class="absolute bottom-4 flex justify-center items-center w-full">
+        <div class="card bg-red-500 mx-2"></div>
+        <div class="card bg-red-500 mx-2"></div>
+        <div class="card bg-red-500 mx-2"></div>
+      </div>
+    </div>
+
+    <!-- Ads -->
+    <div class="absolute left-0 top-0 h-full w-24 bg-gray-700 flex flex-col justify-center items-center">
+      <div class="mb-4">Ad 1</div>
+      <div>Ad 2</div>
+    </div>
+    <div class="absolute right-0 top-0 h-full w-24 bg-gray-700 flex flex-col justify-center items-center">
+      <div class="mb-4">Ad 3</div>
+      <div>Ad 4</div>
+    </div>
+
+  </div>
+</body>
+</html>
