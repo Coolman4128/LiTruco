@@ -13,6 +13,7 @@ game_states = {}
 
 
 #SOMETIME SOON REFACTOR ALL GAME LOGIC INTO A SEPERATE FILE TO BE USED HERE
+#ALSO SOMETIME SOON ADD CODE TO REJECT USERNAMES THAT ARE NOT ALLOWED: SAME AS SOMEONE ELSE, A DEFUALT VALUE, ETC
 
 class GameConsumer(WebsocketConsumer):
     #This function "seats" players every other team, so that when taking turns we can go down the list

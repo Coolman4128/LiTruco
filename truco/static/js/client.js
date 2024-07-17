@@ -57,7 +57,7 @@ let logged_in = false;
 
         findPlayer = function(player) {
             game_state.players.forEach((element, index) => {
-                if (_.isEqual(player, element)){
+                if (player.username == element.username){
                     return index;
                 }
                 else{
