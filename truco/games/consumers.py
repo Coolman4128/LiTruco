@@ -5,12 +5,69 @@ from channels.generic.websocket import WebsocketConsumer
 from games.models import Game, Player
 from django.core import serializers
 import json
+import random
 
 group_count = {}
 
 game_states = {}
 
+
+#SOMETIME SOON REFACTOR ALL GAME LOGIC INTO A SEPERATE FILE TO BE USED HERE
+
 class GameConsumer(WebsocketConsumer):
+    #This function "seats" players every other team, so that when taking turns we can go down the list
+    def interPlayers(self):
+        players = game_states[self.game_name]["players"]
+        newPlayers0 = []
+        newPlayers1 = []
+        newPlayers = []
+        for player in players:
+            if player["team"] == 0:
+                newPlayers0 = newPlayers0 + [player]
+            if player["team"] == 1:
+                newPlayers1 = newPlayers1 + [player]
+        while newPlayers0 != [] and newPlayers1 != []:
+            newPlayers = newPlayers + [newPlayers0.pop()]
+            newPlayers = newPlayers + [newPlayers1.pop()]
+        game_states[self.game_name]["players"] = newPlayers
+
+    #This function will deal cards to a player
+    def dealPlayerCards(self, player):
+        #deal 3 cards, make this one line of code later
+        player["hand"] = player["hand"] + [game_states[self.game_name]["board"]["deck"].pop()]
+        player["hand"] = player["hand"] + [game_states[self.game_name]["board"]["deck"].pop()]
+        player["hand"] = player["hand"] + [game_states[self.game_name]["board"]["deck"].pop()]
+
+    #This function will deal the cards everywhere that needs dealt in preperation for the start of the game.
+    def deal(self):
+        #This dict shows how to find the trump given a card dealt.
+        trumpDict = {
+            "4": "5",
+            "5": "6",
+            "6": "7",
+            "7": "Q",
+            "Q": "J",
+            "J": "K",
+            "K": "A",
+            "A": "2",
+            "2": "3",
+            "3": "4"
+        }
+        for player in game_states[self.game_name]["players"]:
+            self.dealPlayerCards(player)
+        game_states[self.game_name]["board"]["trump"] = trumpDict[game_states[self.game_name]["board"]["deck"].pop()["value"]]
+
+    # This function will generate a deck of cards to replace on that was used
+    def generateDeck(self):
+        deck = []
+        cardList = ["4", "5", "6", "7", "J", "Q", "K", "A", "2", "3"]
+        suitList = ["clubs", "spades", "diamonds", "hearts"]
+        for card in cardList:
+            for suit in suitList:
+                gencard = {"value": card, "suit": suit}
+                deck += [gencard]
+        return deck
+
 
     #This function looks through all the players in the game and finds which one you supplied
     #Returns the index of the player, or -1 if no player is found
@@ -87,6 +144,7 @@ class GameConsumer(WebsocketConsumer):
             "team": 0
         }
         #Creates a new game state if one doesn't already exist.
+        deck = self.generateDeck()
         game_states[self.game_name] = game_states.get(self.game_name, {
             "players": [],
             "teams": [{
@@ -102,7 +160,7 @@ class GameConsumer(WebsocketConsumer):
                 "trickNum": 0,
                 "pointsWorth": 1,
                 "cardsPlayed": [],
-                "deck": [],
+                "deck": deck,
                 "trump": None,
                 "at11": False,
                 "blind": False,
@@ -110,8 +168,7 @@ class GameConsumer(WebsocketConsumer):
             },
             "state": "lobby"
         })
-
-
+        
         self.accept()
 
         async_to_sync(self.channel_layer.group_add)(
@@ -182,15 +239,25 @@ class GameConsumer(WebsocketConsumer):
         #This code will be called when a player sends the "start" command telling the server the player is ready to start the game
         elif (code == "start"):
             currentState = game_states[self.game_name]
+
             #In this if put all the conditions that could stop the game from starting 
-            if len(currentState["players"]) != 4:
+            if len(currentState["players"]) < 4:
                 async_to_sync(self.channel_layer.group_send)(
                 self.game_group_name, {"type": "game.message", "code": "message", "data": "Conditions not met to start game"}
                 )
-            else:
-                #WRITE CODE TO START THE GAME HERE
 
-                game_states[self.game_name]["state"] = "start"
+            else:
+                #This code prepares for the start of the game. First it sits the players every other
+                #Then it shuffles the deck, and deals the cards
+                #Then it makes the first player go first, and sets the game state to "roundstart"
+                self.interPlayers()
+                random.shuffle(game_states[self.game_name]["board"]["deck"])
+                self.deal()
+                game_states[self.game_name]["players"][0]["isTurn"] = True
+                game_states[self.game_name]["state"] = "roundStart"
+                async_to_sync(self.channel_layer.group_send)(
+                self.game_group_name, {"type": "game.sendState", "code": "start", "data": game_states[self.game_name]}
+             )
         
         elif (code == "swap"):
             index = self.findPlayer(text_data_json["player"])
@@ -220,3 +287,9 @@ class GameConsumer(WebsocketConsumer):
         data = event["data"]
         # Send message to WebSocket using the send method. Every socket in the group heard this event so it sends it to everyone, but send itself only sends to one client.
         self.send(text_data=json.dumps({"code": code, "player":player,"data":data}))
+
+    def game_sendState(self, event):
+        code = event["code"]
+        data = event["data"]
+        # Send message to WebSocket using the send method. Every socket in the group heard this event so it sends it to everyone, but send itself only sends to one client.
+        self.send(text_data=json.dumps({"code": code, "data":data}))

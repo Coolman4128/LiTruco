@@ -103,8 +103,11 @@ let logged_in = false;
             else if (data.code === "swap"){
                 game_state = data.data
                 drawLobby()
-                checkforStart()
-                
+                checkforStart()  
+            }
+            else if (data.code === "start"){
+                console.log("MADE IT HEREEEEEE");
+                //Write Code Here to deal with the start of the game
             }
             else if (data.code === "")
             
@@ -132,9 +135,9 @@ let logged_in = false;
             messageInputDom.value = '';
         };
 
-
+        
         //This function is what happnes when the start button is pressed. Write code for starting the game here
-        document.querySelector('#teamSwap').onclick = function(e) {
+        document.getElementById('start').onclick = function(e) {
             gameSocket.send(JSON.stringify({
                 'code': "start"
             }));
