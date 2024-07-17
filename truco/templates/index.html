@@ -1,16 +1,58 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="icon" href="/static/favicon.ico"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#000000"/><meta name="description" content="Web site created using create-react-app"/><link rel="apple-touch-icon" href="/static/logo192.png"/><link rel="manifest" href="/static/manifest.json"/><title>React App</title>
-    <script defer="defer" src="/static/js/main.e57bb564.js"></script><link href="/static/css/main.f855e6bc.css" rel="stylesheet"></head><body><noscript>You need to enable JavaScript to run this app.</noscript><div id="root"></div>
-
-
-    <textarea id="chat-log" cols="100" rows="20"></textarea><br>
-    <input id="chat-message-input" type="text" size="100"><br>
-    <input id="chat-message-submit" type="button" value="Send">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buttons and Inputs</title>
+</head>
+<body>
     {{ game_name|json_script:"game-name" }}
     <script defer="defer" src="/static/js/client.js"></script>
 
+    <h1>Buttons and Text Inputs</h1>
+
+    <!-- Five buttons with unique IDs -->
+    <button id="button1">3 Clowns</button>
+    <button id="button2">Truco</button>
+    <button id="button3">1st Card</button>
+    <button id="button4">2nd Card</button>
+    <button id="button5">3rd Card</button>
+
+    <br><br>
+
+    <!-- Two text inputs each with an associated button -->
+    <div>
+        <input type="text" id="input1" placeholder="Enter text here">
+        <button id="inputButton1">Username</button>
+    </div>
+
+    <br>
+
+    <div>
+        <input type="text" id="input2" placeholder="Enter text here">
+        <button id="inputButton2">Chat</button>
+    </div>
+
+    <br><br>
+
+    <div>
+        <table>
+            <tr>
+              <th>Team 1</th>
+              <th>Team 2</th>
+            </tr>
+            <tr>
+              <td id="T1P1"></td>
+              <td id="T2P1"></td>
+            </tr>
+            <tr>
+                <td id="T1P2"></td>
+                <td id="T2P2"></td>
+            </tr>
+        </table>
+        <button id="teamSwap">Swap</button>
+    </div>
 
 
-
-
-
-</body></html>
+</body>
+</html>
