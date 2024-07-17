@@ -7,12 +7,13 @@
 </head>
 <body>
     {{ game_name|json_script:"game-name" }}
+    <script src="/static/js/lodash.js"></script>
     <script defer="defer" src="/static/js/client.js"></script>
 
     <h1>Buttons and Text Inputs</h1>
 
     <!-- Five buttons with unique IDs -->
-    <button id="button1">3 Clowns</button>
+    <button style="visibility:hidden" id="button1">3 Clowns</button>
     <button id="button2">Truco</button>
     <button id="button3">1st Card</button>
     <button id="button4">2nd Card</button>
@@ -36,23 +37,29 @@
     <br><br>
 
     <div>
+        <h2></h2>
+    </div>
+
+
+    <br><br>
+
+    <div>
         <table>
             <tr>
               <th>Team 1</th>
               <th>Team 2</th>
             </tr>
             <tr>
-              <td id="T1P1"></td>
-              <td id="T2P1"></td>
-            </tr>
-            <tr>
-                <td id="T1P2"></td>
-                <td id="T2P2"></td>
+              <td><p style="whiteSpace: pre-line" id="T1"></p></td>
+              <td><p style="whiteSpace: pre-line" id="T2"></p></td>
             </tr>
         </table>
         <button id="teamSwap">Swap</button>
     </div>
 
+    <br><br>
+
+    <button style="visibility:hidden" id="start">start!</button>
 
 </body>
 </html>
