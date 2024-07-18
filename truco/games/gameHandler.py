@@ -1,4 +1,5 @@
-
+import random
+import yaml
 
 #This Class will store a "Game" which includes all the information that makes up a game
 #but also the functions used to make the game progress and run
@@ -29,6 +30,17 @@ class GameHandler():
             },
             "state": "lobby"
         }
+
+    def printGameState(self):
+        print(yaml.dump(self.game_state, allow_unicode=True, default_flow_style=False))
+
+    #This function will do everything needed to go from the lobby to the start of the game
+    def startGame(self):
+        self.interPlayers()
+        random.shuffle(self.game_state["board"]["deck"])
+        self.deal()
+        self.game_state["players"][0]["isTurn"] = True
+        self.game_state["state"] = "roundStart"
 
     # This function will generate a deck of cards to replace on that was used
     def generateDeck(self):
