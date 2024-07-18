@@ -4,6 +4,7 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from games.models import Game, Player
 from django.core import serializers
+from games.gameHandler import GameHandler
 import json
 import random
 
@@ -12,7 +13,8 @@ group_count = {}
 game_states = {}
 
 
-#SOMETIME SOON REFACTOR ALL GAME LOGIC INTO A SEPERATE FILE TO BE USED HERE
+
+#SOMETIME SOON IMPLEMNET REFACTORED GAMEHANDLER CLASS TO BE USED HERE
 #ALSO SOMETIME SOON ADD CODE TO REJECT USERNAMES THAT ARE NOT ALLOWED: SAME AS SOMEONE ELSE, A DEFUALT VALUE, ETC
 
 class GameConsumer(WebsocketConsumer):
@@ -119,7 +121,7 @@ class GameConsumer(WebsocketConsumer):
             self.player["username"] = username
 
         #Call the sort teams method which will find a valid team to place the new player on, or potentially reject them if they are full.
-        # returns 1 on success and -1 on failure
+        # returns what team too join, or -1 if the game is full
         self.sortTeams()
 
         #Add player to the game state, and then send a socket to the player to identify themself
