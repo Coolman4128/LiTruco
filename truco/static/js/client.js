@@ -2,7 +2,31 @@ const gameName = JSON.parse(document.getElementById('game-name').textContent);
 
 let T1 = document.getElementById("T1")
 let T2 = document.getElementById("T2")
+
+let C1 = document.getElementById("card1p")
+let C2 = document.getElementById("card2p")
+let C3 = document.getElementById("card3p")
+
+let TRUMP = document.getElementById("trump")
+let T1P = document.getElementById("T1P")
+let T2P = document.getElementById("T2P")
+let T1T = document.getElementById("T1T")
+let T2T = document.getElementById("T2T")
+let YT = document.getElementById("yourTurn")
+let CP = document.getElementById("cardsPlayed")
+
 const lobbySlots = [T1, T2]
+const cardSlots = [C1, C2, C3]
+const boardSlots = {
+    "trump": TRUMP,
+    "t1p": T1P,
+    "t2p": T2P,
+    "t1t": T1T,
+    "t2t": T2T,
+    "yt": YT,
+    "cp": CP
+}
+
 
 let startbutton = document.getElementById("start")
 
@@ -10,6 +34,35 @@ let game_state;
 let player = null;
 let logged_in = false;
 
+        //This function will draw cards to the screen
+        drawCards = function(){
+            console.log(player)
+            player.hand.forEach((element, index) => {
+                cardSlots[index].innerHTML = element.value + ", " + element.suit
+            })
+
+        }
+
+        drawBoard = function() {
+            teams = game_state.teams
+            board = game_state.board
+            boardSlots.trump.innerHTML = board.trump
+            boardSlots.t1p.innerHTML = teams["0"].points
+            boardSlots.t2p.innerHTML = teams["1"].points
+            boardSlots.t1t.innerHTML = teams["0"].tricksWon
+            boardSlots.t2t.innerHTML = teams["1"].tricksWon
+            boardSlots.yt.innerHTML = player.isTurn
+            boardSlots.cp.innerHTML = ""
+            board.cardsPlayed.forEach(element =>{
+                boardSlots.cp.innerHTML = boardSlots.cp.innerHTML + ", " + element.value + "|" + element.suit
+            })
+
+        }
+
+        updatePlayer = function(){
+            index = findPlayer(player)
+            player = game_state.players[index]
+        }
 
         drawLobby = function(){
             lobbySlots.forEach(element => {
@@ -56,15 +109,15 @@ let logged_in = false;
         );
 
         findPlayer = function(player) {
+            let finIndex = -1;
             game_state.players.forEach((element, index) => {
                 if (player.username == element.username){
-                    return index;
+                    finIndex = index
                 }
-                else{
-                    
+                else{   
                 }
-                return -1;
             });
+            return finIndex;
         };
 
 
@@ -85,6 +138,7 @@ let logged_in = false;
             else if (data.code === "yourplayer"){
                 player = data.player
                 game_state = data.data
+                console.log(player);
                 
             }
             else if (data.code === "newplayer"){
@@ -106,8 +160,16 @@ let logged_in = false;
                 checkforStart()  
             }
             else if (data.code === "start"){
-                console.log("MADE IT HEREEEEEE");
-                //Write Code Here to deal with the start of the game
+                game_state = data.data
+                updatePlayer()
+                drawCards()
+                drawBoard()
+                if (player.isTurn){
+                    //Write Code to allow the player to take their turn
+                }
+                else{
+                    //Write Code to allow the player to WAIT THEIR TURN
+                }
             }
             else if (data.code === "")
             
