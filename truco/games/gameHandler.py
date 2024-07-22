@@ -7,6 +7,7 @@ class GameHandler():
     def __init__(self, game_name):
         self.game_name = game_name
         deck = self.generateDeck()
+        self.trucoVote = []
         self.game_state = {
             "players": [],
             "teams": [{
@@ -26,10 +27,199 @@ class GameHandler():
                 "trump": None,
                 "at11": False,
                 "blind": False,
-                "firstTurn": False
+                "firstTurn": False,
+                "whosDeal": 0
             },
             "state": "lobby"
         }
+
+    def increasePointValue(self):
+        if self.game_state["board"]["pointsWorth"] == 1:
+            self.game_state["board"]["pointsWorth"] = 3
+        else:
+            self.game_state["board"]["pointsWorth"] = self.game_state["board"]["pointsWorth"] + 3
+
+    def handleTruco(self, code):
+        if code == "fold":
+            teamWon = 0
+            if (self.game_state["teams"][0]["calledTruco"] == True):
+                self.round
+            self.roundOver()
+        elif code == "play":
+            self.increasePointValue()
+            self.game_state["state"] = "inPlay"
+        elif code == "raise":
+            self.increasePointValue()
+            
+
+    def trucoCalled(self, player):
+        team = self.game_state["teams"][player["team"]]
+        team["calledTruco"] = True
+        if (player["team"] == 0):
+            self.game_state["teams"][1]["calledTruco"] = False
+        else:
+             self.game_state["teams"][0]["calledTruco"] = False
+        self.game_state["state"] = "truco"
+
+    def awardPoints(self, winner = "default"):
+        winningTeam = None
+        if (winner == "default"):
+            if (self.game_state["teams"][0]["tricksWon"] > self.game_state["teams"][1]["tricksWon"]):
+                winningTeam = self.game_state["teams"][0]
+            elif (self.game_state["teams"][0]["tricksWon"] == self.game_state["teams"][1]["tricksWon"]):
+                #Put code to deal wiht a complete tie here
+                pass
+            else:
+                winningTeam = self.game_state["teams"][1]
+        else:
+            winningTeam = winner
+        winningTeam["points"] = winningTeam["points"] + self.game_state["board"]["pointsWorth"]
+
+    #This function handles what will happen when a round is over, it awards points and then sets up for the next round
+    def roundOver(self, winner = "default"):
+        self.game_state["board"]["cardsPlayed"] = []
+        self.trucoVote = []
+        self.awardPoints(winner = winner)
+        self.game_state["teams"][0]["tricksWon"] = 0
+        self.game_state["teams"][1]["tricksWon"] = 0
+        self.game_state["teams"][0]["calledTruco"] = False
+        self.game_state["teams"][1]["calledTruco"] = False
+        self.game_state["board"]["trickNum"] = 0
+        self.game_state["board"]["pointsWorth"] = 1
+        self.game_state["board"]["deck"] = self.generateDeck()
+        random.shuffle(self.game_state["board"]["deck"])
+        self.deal()
+        if(self.game_state["teams"][0]["points"] == 11 and self.game_state["teams"][1]["points"] == 11):
+            self.game_state["board"]["blind"] = True 
+        if (self.game_state["teams"][0]["points"] == 11 or self.game_state["teams"][1]["points"] == 11):
+            self.game_state["board"]["at11"] = True 
+        self.game_state["board"]["firstTurn"] = True
+        if (self.game_state["board"]["whosDeal"] == len(self.game_state["players"]) - 1):
+            self.game_state["board"]["whosDeal"] = 0
+        else:
+            self.game_state["board"]["whosDeal"] = self.game_state["board"]["whosDeal"] + 1
+        
+        for x in range(len(self.game_state["players"])):
+            if x == self.game_state["board"]["whosDeal"]:
+                self.game_state["players"][x]["isTurn"] = True  
+            else:
+                self.game_state["players"][x]["isTurn"] = False 
+        
+
+    def newTrick(self):
+        pass
+
+    #This function will handle the end of a trick, including weather to start a new round, start a new trick, etc
+    def trickOver(self):
+        winner, tie = self.calculateWinner()
+        winner = self.findPlayer({"username": winner})
+        winner = self.game_state["players"][winner]
+        if tie == True:
+            if (self.game_state["teams"][0]["tricksWon"] == self.game_state["teams"][1]["tricksWon"]):
+                self.game_state["board"]["trickNum"] = 1
+            else:
+                self.game_state["board"]["trickNum"] = 3
+        else:
+            winningTeam = winner["team"]
+            if (self.game_state["board"]["firstTurn"]):
+                self.game_state["teams"][winningTeam]["tricksWon"] = self.game_state["teams"][winningTeam]["tricksWon"] + 1.1
+            else:
+                self.game_state["teams"][winningTeam]["tricksWon"] = self.game_state["teams"][winningTeam]["tricksWon"] + 1
+        self.game_state["board"]["cardsPlayed"] = []
+        self.game_state["board"]["trickNum"] = self.game_state["board"]["trickNum"] + 1
+
+        for player in self.game_state["players"]:
+            if (player["username"] == winner["username"]):
+                player["isTurn"] = True
+            else:
+                player["isTurn"] = False
+        self.game_state["board"]["firstTurn"] = False
+        if (self.game_state["board"]["trickNum"] >= 3 or self.game_state["teams"][0]["tricksWon"] >= 2 or self.game_state["teams"][1]["tricksWon"] >= 2):
+            self.roundOver()
+
+    #Function to calculate the winner, needs a refactor but should work for now
+    #Returns the player with the winning card
+    def calculateWinner(self):
+        cardValueDict = {
+            "4": 1,
+            "5": 2,
+            "6": 3,
+            "7": 4,
+            "Q": 5,
+            "J": 6,
+            "K": 7,
+            "A": 8,
+            "2": 9,
+            "3": 10,
+            "TD": 11,
+            "TS": 12,
+            "TH": 13,
+            "TC": 14
+        }
+        currentWinner = None
+        tie = False
+        for play in self.game_state["board"]["cardsPlayed"]:
+            if currentWinner == None:
+                currentWinner = play
+                continue
+            if (play["card"]["value"] == self.game_state["board"]["trump"] and currentWinner["card"]["value"] == self.game_state["board"]["trump"]):
+                cardValue = "TD"
+                currentWinnerValue = "TD"
+                if (play["card"]["suit"] == "diamonds"):
+                    pass
+                elif (play["card"]["suit"] == "spades"):
+                    cardValue = "TS"
+                elif (play["card"]["suit"] == "hearts"):
+                    cardValue = "TH"
+                elif (play["card"]["suit"] == "clubs"):
+                    cardValue = "TC"
+
+                if (currentWinner["card"]["suit"] == "diamonds"):
+                    pass
+                elif (currentWinner["card"]["suit"] == "spades"):
+                    currentWinnerValue = "TS"
+                elif (currentWinner["card"]["suit"] == "hearts"):
+                    currentWinnerValue = "TH"
+                elif (currentWinner["card"]["suit"] == "clubs"):
+                    currentWinnerValue = "TC"
+                
+                if (cardValueDict[cardValue] > cardValueDict[currentWinnerValue]):
+                    tie = False
+                    currentWinner = play
+                
+
+            elif (play["card"]["value"] == self.game_state["board"]["trump"]):
+                cardValue = "TD"
+                if (play["card"]["suit"] == "diamonds"):
+                    pass
+                elif (play["card"]["suit"] == "spades"):
+                    cardValue = "TS"
+                elif (play["card"]["suit"] == "hearts"):
+                    cardValue = "TH"
+                elif (play["card"]["suit"] == "clubs"):
+                    cardValue = "TC"
+                if (cardValueDict[cardValue] > cardValueDict[currentWinner["card"]["value"]]):
+                    tie = False
+                    currentWinner = play
+            
+            elif (currentWinner["card"]["value"] == self.game_state["board"]["trump"]):
+                continue
+
+            else:
+                if (cardValueDict[play["card"]["value"]] > cardValueDict[currentWinner["card"]["value"]]):
+                    currentWinner = play
+                    tie = False
+                elif (cardValueDict[play["card"]["value"]] == cardValueDict[currentWinner["card"]["value"]]):
+                    playIndex = self.findPlayer({"username": play["player"]})
+                    currentIndex = self.findPlayer({"username": currentWinner["player"]})
+                    if (self.game_state["players"][playIndex]["team"] == self.game_state["players"][currentIndex]["team"] ):
+                        pass
+                    else:
+                        tie = True
+        if (tie):
+            return currentWinner["player"], tie
+        else:
+            return currentWinner["player"], tie
 
     def printGameState(self):
         print(yaml.dump(self.game_state, allow_unicode=True, default_flow_style=False))
@@ -40,7 +230,8 @@ class GameHandler():
         random.shuffle(self.game_state["board"]["deck"])
         self.deal()
         self.game_state["players"][0]["isTurn"] = True
-        self.game_state["state"] = "roundStart"
+        self.game_state["state"] = "inPlay"
+        self.game_state["board"]["firstTurn"] = True
 
     # This function will generate a deck of cards to replace on that was used
     def generateDeck(self):
@@ -103,6 +294,7 @@ class GameHandler():
     #This function will deal cards to a player
     def dealPlayerCards(self, player):
         #deal 3 cards, make this one line of code later
+        player["hand"] = []
         player["hand"] = player["hand"] + [self.game_state["board"]["deck"].pop()]
         player["hand"] = player["hand"] + [self.game_state["board"]["deck"].pop()]
         player["hand"] = player["hand"] + [self.game_state["board"]["deck"].pop()]

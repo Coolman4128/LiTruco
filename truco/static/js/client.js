@@ -15,6 +15,9 @@ let T2T = document.getElementById("T2T")
 let YT = document.getElementById("yourTurn")
 let CP = document.getElementById("cardsPlayed")
 
+let UE = document.getElementById("userError")
+let TO = document.getElementById("trucoOptions")
+
 const lobbySlots = [T1, T2]
 const cardSlots = [C1, C2, C3]
 const boardSlots = {
@@ -33,10 +36,43 @@ let startbutton = document.getElementById("start")
 let game_state;
 let player = null;
 let logged_in = false;
+let canVote = false;
+
+        callTruco = function(){
+            console.log(game_state.teams[player.team])
+            if (player.isTurn === false){
+                return "notTurn"
+            }
+            else if (game_state.teams[player.team].calledTruco === true){
+                return "alreadyCalled"
+            }
+            else if (game_state.board.pointsWorth === 12){
+                return "alreadyWorth12"
+            }
+            gameSocket.send(JSON.stringify({
+                'code': "callTruco",
+                'player': player
+            }));
+        }
+
+        //This Function is supplied a card and will attempt to play it
+        playCard = function(card){
+            if (player.isTurn === false){
+                return "notTurn"
+            }
+            gameSocket.send(JSON.stringify({
+                'code': "playCard",
+                'player': player,
+                'card': card
+            }));
+        }
 
         //This function will draw cards to the screen
         drawCards = function(){
             console.log(player)
+            cardSlots.forEach(element => {
+                element.innerHTML = ""
+            })
             player.hand.forEach((element, index) => {
                 cardSlots[index].innerHTML = element.value + ", " + element.suit
             })
@@ -54,7 +90,7 @@ let logged_in = false;
             boardSlots.yt.innerHTML = player.isTurn
             boardSlots.cp.innerHTML = ""
             board.cardsPlayed.forEach(element =>{
-                boardSlots.cp.innerHTML = boardSlots.cp.innerHTML + ", " + element.value + "|" + element.suit
+                boardSlots.cp.innerHTML = boardSlots.cp.innerHTML + ", " + element.card.value + "|" + element.card.suit
             })
 
         }
@@ -136,6 +172,7 @@ let logged_in = false;
                 }
             }
             else if (data.code === "yourplayer"){
+                UE.style.visibility = "hidden";
                 player = data.player
                 game_state = data.data
                 console.log(player);
@@ -171,6 +208,43 @@ let logged_in = false;
                     //Write Code to allow the player to WAIT THEIR TURN
                 }
             }
+            else if (data.code === "cardPlayed") {
+                game_state = data.data
+                updatePlayer()
+                drawCards()
+                drawBoard()
+            }
+
+            else if (data.code === "trucoCalled"){
+                game_state = data.data
+                updatePlayer()
+                teamCalled = data.team
+                if (player.team === teamCalled) {
+                    TO.style.visibility = "hidden";
+                }
+                else {
+                    TO.style.visibility = "visible";
+                }
+            }
+
+            else if (data.code === "trucoAccepted"){
+                game_state = data.data
+                updatePlayer()
+                drawCards()
+                drawBoard()
+            }
+            else if (data.code === "trucoFolded"){
+                game_state = data.data
+                updatePlayer()
+                drawCards()
+                drawBoard()
+            }
+            else if (data.code === "error"){
+                if (data.error === "invalidusername"){
+                    UE.style.visibility = "visible";
+                }
+            }
+            
             else if (data.code === "")
             
             console.log(data.data);
@@ -203,6 +277,38 @@ let logged_in = false;
             gameSocket.send(JSON.stringify({
                 'code': "start"
             }));
+        };
+
+        document.getElementById('fold').onclick = function(e) {
+            gameSocket.send(JSON.stringify({
+                'code': "vote",
+                "vote": "fold",
+                "player": player
+            }));
+        };
+
+        document.getElementById('play').onclick = function(e) {
+            gameSocket.send(JSON.stringify({
+                'code': "vote",
+                "vote": "play",
+                "player": player
+            }));
+        };
+
+        document.getElementById('raise').onclick = function(e) {
+            gameSocket.send(JSON.stringify({
+                'code': "vote",
+                "vote": "raise",
+                "player": player
+            }));
+        };
+
+        document.getElementById('button3').onclick = function(e) {
+            playCard(player.hand["0"])
+        };
+
+        document.getElementById('button2').onclick = function(e) {
+            callTruco()
         };
 
 
