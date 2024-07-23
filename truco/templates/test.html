@@ -171,6 +171,12 @@
         max-width:80px;
         border: 2px solid #000;
         border-radius: 8px;
+        }
+        .cardsmall{
+        width:100%;
+        max-width:40px;
+        border: 1px solid #000;
+        border-radius: 3px;
  }
 
     </style>
@@ -298,7 +304,7 @@
                     <div class="placeholder flex justify-center items-center p-4">
                         <p id ="teamMateUser"></p>
                     </div>
-                    <div class="placeholder p-4">Played Card Slot</div>
+                    <div id="teammateCard" class="placeholder p-4"></div>
                 </div>
 
                 <!-- Opponents and Card Slots -->
@@ -307,24 +313,24 @@
                         <div class="placeholder flex-1 flex justify-center items-center p-4">
                             <p id ="Opponent1User"></p>
                         </div>
-                        <div class="placeholder p-4">Played Card Slot</div>
+                        <div id="opp1Card"class="placeholder p-4"></div>
                     </div>
                     <div class="rounded-full bg-green-200 p-10"></div>
                     <div class="flex flex-col items-center space-y-4">
                         <div class="placeholder flex-1 flex justify-center items-center p-4">
                             <p id ="Opponent2User"></p>
                         </div>
-                        <div class="placeholder p-4">Played Card Slot</div>
+                        <div id="opp2Card" class="placeholder p-4"></div>
                     </div>
                 </div>
 
                 <!-- Played Card Slot for User -->
                 <div class="flex justify-center">
-                    <div id ="cardsPlayed" class="placeholder p-4"></div>
+                    <div id ="selfCard" class="placeholder p-4"></div>
                 </div>
 
                 <!-- Card Slots -->
-                <div id="cardSlotContainer" class="mt-auto flex justify-around">
+                <div id="cardSlotContainer" class="mt-auto flex justify-center">
                     <div id = "card1p" class="placeholder p-4"></div>
                     <div id = "card2p"class="placeholder p-4"></div>
                     <div id = "card3p" class="placeholder p-4"></div>

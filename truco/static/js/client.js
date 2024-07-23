@@ -32,6 +32,9 @@ const boardSlots = {
     "cp": CP
 }
 
+let playedCardSlots = {
+
+}
 
 let startbutton = document.getElementById("start")
 
@@ -39,6 +42,41 @@ let game_state;
 let player = null;
 let logged_in = false;
 let canVote = false;
+let players = {
+    "teammate": null,
+    "opp1": null,
+    "opp2": null
+}
+
+
+        drawPlayedCards = function () {
+            console.log(game_state.board.cardsPlayed)
+            document.getElementById("teammateCard").innerHTML = ""
+            document.getElementById("opp2Card").innerHTML = ""
+            document.getElementById("opp1Card").innerHTML = ""
+            document.getElementById("selfCard").innerHTML = ""
+            game_state.board.cardsPlayed.forEach(element => {
+                if (element.player === players.teammate.username) {
+                    cardslot = document.getElementById("teammateCard")
+                    cardslot.innerHTML = cardslot.innerHTML + '<img class="cardsmall" src="/static/media/cards/' + element.card.value + element.card.suit + '.jpg" alt="' + element.card.value + element.card.suit + '">'
+                }
+                else if (element.player === players.opp1.username) {
+                    cardslot = document.getElementById("opp1Card")
+                    cardslot.innerHTML = cardslot.innerHTML + '<img class="cardsmall" src="/static/media/cards/' + element.card.value + element.card.suit + '.jpg" alt="' + element.card.value + element.card.suit + '">'
+                }
+                else if (element.player === players.opp2.username) {
+                    cardslot = document.getElementById("opp2Card")
+                    cardslot.innerHTML = cardslot.innerHTML + '<img class="cardsmall" src="/static/media/cards/' + element.card.value + element.card.suit + '.jpg" alt="' + element.card.value + element.card.suit + '">'
+                }
+                else if (element.player === player.username){
+                    cardslot = document.getElementById("selfCard")
+                    cardslot.innerHTML = cardslot.innerHTML + '<img class="cardsmall" src="/static/media/cards/' + element.card.value + element.card.suit + '.jpg" alt="' + element.card.value + element.card.suit + '">'
+                }
+                
+            })
+            
+
+        }
 
         callTruco = function(){
             if (player.isTurn === false){
@@ -73,7 +111,7 @@ let canVote = false;
             cardContain = document.getElementById("cardSlotContainer")
             cardContain.innerHTML = ""
             player.hand.forEach((element, index)=> {
-                cardContain.innerHTML = cardContain.innerHTML + '<button id="cardbutton' + index + '" onclick="playCardButton(' + index + ')"> <img class="card" src="/static/media/cards/' + element.value + element.suit + '.jpg" alt="' + element.value + element.suit + '"></button>'
+                cardContain.innerHTML = cardContain.innerHTML + '<button class = "mx-4" id="cardbutton' + index + '" onclick="playCardButton(' + index + ')"> <img class="card" src="/static/media/cards/' + element.value + element.suit + '.jpg" alt="' + element.value + element.suit + '"></button>'
             })
             
         }
@@ -93,17 +131,43 @@ let canVote = false;
             boardSlots.t1t.innerHTML = teams["0"].tricksWon
             boardSlots.t2t.innerHTML = teams["1"].tricksWon
             boardSlots.yt.innerHTML = player.isTurn
-            boardSlots.cp.innerHTML = ""
-            board.cardsPlayed.forEach(element =>{
-                boardSlots.cp.innerHTML = boardSlots.cp.innerHTML + ", " + element.card.value + "|" + element.card.suit
-            })
+            drawPlayedCards()
 
         }
 
-        updatePlayer = function(){
+        updatePlayers = function() {
             index = findPlayer(player)
             player = game_state.players[index]
+            newindex = 0
+            if (index+1 === game_state.players.length){
+                newindex = 0
+            }
+            else {
+                newindex = index + 1
+            }
+            for (let x = 0; x < game_state.players.length; x++){
+                if (x === 0){
+                    continue
+                }
+                else if ( x === 1){
+                    players.opp1 = game_state.players[newindex]
+                }
+                else if (x === 2){
+                    players.teammate = game_state.players[newindex]
+                }
+                else if (x === 3){
+                    players.opp2 = game_state.players[newindex]
+                }
+                if (newindex+1 === game_state.players.length){
+                    newindex = 0
+                }
+                else {
+                    newindex = newindex + 1
+            }
         }
+        console.log(player)
+        console.log(players)
+    }
 
         drawLobby = function(){
             lobbySlots.forEach(element => {
@@ -213,7 +277,7 @@ let canVote = false;
             else if (data.code === "start"){
                 game_state = data.data
                 closeNav()
-                updatePlayer()
+                updatePlayers()
                 drawCards()
                 drawBoard()
                 check3Clowns()
@@ -230,7 +294,7 @@ let canVote = false;
             else if (data.code === "cardPlayed") {
                 game_state = data.data
                 TO.style.visibility = "hidden";
-                updatePlayer()
+                updatePlayers()
                 drawCards()
                 drawBoard()
                 check3Clowns()
@@ -246,7 +310,7 @@ let canVote = false;
 
             else if (data.code === "trucoCalled"){
                 game_state = data.data
-                updatePlayer()
+                updatePlayers()
                 check3Clowns()
                 teamCalled = data.team
                 if (player.team === teamCalled) {
@@ -260,7 +324,7 @@ let canVote = false;
             else if (data.code === "trucoAccepted"){
                 game_state = data.data
                 TO.style.visibility = "hidden";
-                updatePlayer()
+                updatePlayers()
                 drawCards()
                 drawBoard()
                 check3Clowns()
@@ -268,7 +332,7 @@ let canVote = false;
             else if (data.code === "trucoFolded"){
                 game_state = data.data
                 TO.style.visibility = "hidden";
-                updatePlayer()
+                updatePlayers()
                 drawCards()
                 drawBoard()
                 check3Clowns()
