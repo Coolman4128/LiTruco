@@ -17,6 +17,8 @@ let CP = document.getElementById("cardsPlayed")
 
 let UE = document.getElementById("userError")
 let TO = document.getElementById("trucoOptions")
+let PB = document.getElementById("playButtons")
+let THREEC = document.getElementById("button1")
 
 const lobbySlots = [T1, T2]
 const cardSlots = [C1, C2, C3]
@@ -39,7 +41,6 @@ let logged_in = false;
 let canVote = false;
 
         callTruco = function(){
-            console.log(game_state.teams[player.team])
             if (player.isTurn === false){
                 return "notTurn"
             }
@@ -69,14 +70,18 @@ let canVote = false;
 
         //This function will draw cards to the screen
         drawCards = function(){
-            console.log(player)
-            cardSlots.forEach(element => {
-                element.innerHTML = ""
+            cardContain = document.getElementById("cardSlotContainer")
+            cardContain.innerHTML = ""
+            player.hand.forEach((element, index)=> {
+                cardContain.innerHTML = cardContain.innerHTML + '<button id="cardbutton' + index + '" onclick="playCardButton(' + index + ')"> <img class="card" src="/static/media/cards/' + element.value + element.suit + '.jpg" alt="' + element.value + element.suit + '"></button>'
             })
-            player.hand.forEach((element, index) => {
-                cardSlots[index].innerHTML = element.value + ", " + element.suit
-            })
+            
+        }
 
+        playCardButton = function(index) {
+            if (player.hand.length >= index + 1){
+                playCard(player.hand[index])
+            }
         }
 
         drawBoard = function() {
@@ -127,11 +132,11 @@ let canVote = false;
                 }
             })
             if (team1Count === team2Count && game_state.players.length > 3){
-                startbutton.style.visibility = "visible";
+                startbutton.style.backgroundColor = "#8b0000";
                 return true;
             }
             else {
-                startbutton.style.visibility = "hidden";
+                startbutton.style.backgroundColor = "#818181";
                 return false
             }
         };
@@ -156,6 +161,14 @@ let canVote = false;
             return finIndex;
         };
 
+        check3Clowns = function() {
+            if (game_state.board.firstTurn === true && (game_state.teams["0"].calledTruco === false && game_state.teams["1"].calledTruco === false)) {
+                THREEC.style.visibility = "visible"
+            }
+            else {
+                THREEC.style.visibility = "hidden"
+            }
+        }
 
         //This is the function that gets called when a message comes in from the server.
         //Would be smart to make this handle most of the game information coming in from the server.
@@ -163,7 +176,7 @@ let canVote = false;
             const data = JSON.parse(e.data);
             // look for the code to see if game_state is encoded in the message.
             if (data.code === "start_state"){
-                console.log("here!)")
+                closeLobby()
                 game_state = data.data 
                 if (game_state.state === "lobby"){
                     game_state.players.forEach((element) => {
@@ -173,10 +186,11 @@ let canVote = false;
             }
             else if (data.code === "yourplayer"){
                 UE.style.visibility = "hidden";
+                openLobby()
                 player = data.player
                 game_state = data.data
-                console.log(player);
-                
+                console.log(player)
+                closeUsername()
             }
             else if (data.code === "newplayer"){
                 newplayer = data.player
@@ -185,7 +199,7 @@ let canVote = false;
                 drawLobby()
                 checkforStart()
             }
-            else if (data.code === "playerleft"){
+            else if (data.code === "playerleftLobby"){
                 playerleft = data.player
                 game_state = data.data
                 drawLobby()
@@ -198,26 +212,42 @@ let canVote = false;
             }
             else if (data.code === "start"){
                 game_state = data.data
+                closeNav()
                 updatePlayer()
                 drawCards()
                 drawBoard()
-                if (player.isTurn){
+                check3Clowns()
+                console.log(player)
+                if (player.isTurn === true){
+                    PB.style.visibility = "visible";
                     //Write Code to allow the player to take their turn
                 }
                 else{
+                    PB.style.visibility = "hidden";
                     //Write Code to allow the player to WAIT THEIR TURN
                 }
             }
             else if (data.code === "cardPlayed") {
                 game_state = data.data
+                TO.style.visibility = "hidden";
                 updatePlayer()
                 drawCards()
                 drawBoard()
+                check3Clowns()
+                if (player.isTurn === true){
+                    PB.style.visibility = "visible";
+                    //Write Code to allow the player to take their turn
+                }
+                else{
+                    PB.style.visibility = "hidden";
+                    //Write Code to allow the player to WAIT THEIR TURN
+                }
             }
 
             else if (data.code === "trucoCalled"){
                 game_state = data.data
                 updatePlayer()
+                check3Clowns()
                 teamCalled = data.team
                 if (player.team === teamCalled) {
                     TO.style.visibility = "hidden";
@@ -229,15 +259,19 @@ let canVote = false;
 
             else if (data.code === "trucoAccepted"){
                 game_state = data.data
+                TO.style.visibility = "hidden";
                 updatePlayer()
                 drawCards()
                 drawBoard()
+                check3Clowns()
             }
             else if (data.code === "trucoFolded"){
                 game_state = data.data
+                TO.style.visibility = "hidden";
                 updatePlayer()
                 drawCards()
                 drawBoard()
+                check3Clowns()
             }
             else if (data.code === "error"){
                 if (data.error === "invalidusername"){
@@ -261,8 +295,8 @@ let canVote = false;
 
         //This function is called when the "username" button is clicked
         // It sends a json object to the server telling it its username
-        document.querySelector('#inputButton1').onclick = function(e) {
-            const messageInputDom = document.querySelector('#input1');
+        document.getElementById('inputButton1').onclick = function(e) {
+            const messageInputDom = document.getElementById("input1")
             const message = messageInputDom.value;
             gameSocket.send(JSON.stringify({
                 'code': "username",
@@ -279,41 +313,81 @@ let canVote = false;
             }));
         };
 
-        document.getElementById('fold').onclick = function(e) {
-            gameSocket.send(JSON.stringify({
-                'code': "vote",
-                "vote": "fold",
-                "player": player
-            }));
-        };
+        //document.getElementById('fold').onclick = function(e) {
+            //gameSocket.send(JSON.stringify({
+                //'code': "vote",
+                //"vote": "fold",
+                //"player": player
+            //}));
+        //};
 
-        document.getElementById('play').onclick = function(e) {
-            gameSocket.send(JSON.stringify({
-                'code': "vote",
-                "vote": "play",
-                "player": player
-            }));
-        };
+        //document.getElementById('play').onclick = function(e) {
+            //gameSocket.send(JSON.stringify({
+                //'code': "vote",
+                //"vote": "play",
+                //"player": player
+            //}));
+        //};
 
-        document.getElementById('raise').onclick = function(e) {
-            gameSocket.send(JSON.stringify({
-                'code': "vote",
-                "vote": "raise",
-                "player": player
-            }));
-        };
+        function openNav() {
+            document.getElementById("overlayMenu").style.display = "block";
+          }
+          
+          function closeNav() {
+            document.getElementById("overlayMenu").style.display = "none";
+          }
 
+          function openLobby() {
+            document.getElementById("lobbyMenu").style.display = "block";
+          }
+          
+          function closeLobby() {
+            document.getElementById("lobbyMenu").style.display = "none";
+          }
+
+          function closeUsername() {
+            document.getElementById("username-popup").style.display = "none";
+          }
+
+        //document.getElementById('raise').onclick = function(e) {
+            //gameSocket.send(JSON.stringify({
+                //'code': "vote",
+                //"vote": "raise",
+                //"player": player
+           // }));
+        //};
+
+        /*
         document.getElementById('button3').onclick = function(e) {
-            playCard(player.hand["0"])
+            if (player.hand.length >= 1){
+                playCard(player.hand["0"])
+            }
+        };
+        document.getElementById('button4').onclick = function(e) {
+            if (player.hand.length >= 2){
+                playCard(player.hand["1"])
+            }
+        };
+        document.getElementById('button5').onclick = function(e) {
+            if (player.hand.length >= 3){
+                playCard(player.hand["2"])
+            }
+        };
+
+        document.getElementById('button1').onclick = function(e) {
+            if (player.hand.length >= 3){
+                playCard(player.hand["2"])
+            }
         };
 
         document.getElementById('button2').onclick = function(e) {
             callTruco()
         };
+        */
 
 
         //This function is what happnes when the swap button is pressed. Write code for swapping teams here
-        document.querySelector('#teamSwap').onclick = function(e) {
+        document.getElementById('teamSwap').onclick = function(e) {
             if (player === null){
                 return;
             }

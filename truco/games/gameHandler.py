@@ -1,5 +1,6 @@
 import random
 import yaml
+import math
 
 #This Class will store a "Game" which includes all the information that makes up a game
 #but also the functions used to make the game progress and run
@@ -28,6 +29,7 @@ class GameHandler():
                 "at11": False,
                 "blind": False,
                 "firstTurn": False,
+                "firstTrick": False,
                 "whosDeal": 0
             },
             "state": "lobby"
@@ -49,7 +51,10 @@ class GameHandler():
             self.increasePointValue()
             self.game_state["state"] = "inPlay"
         elif code == "raise":
-            self.increasePointValue()
+            if (self.game_state["board"]["pointsWorth"] == 9):
+                return
+            else:
+                self.increasePointValue()
             
 
     def trucoCalled(self, player):
@@ -94,6 +99,7 @@ class GameHandler():
         if (self.game_state["teams"][0]["points"] == 11 or self.game_state["teams"][1]["points"] == 11):
             self.game_state["board"]["at11"] = True 
         self.game_state["board"]["firstTurn"] = True
+        self.game_state["board"]["firstTrick"] = True
         if (self.game_state["board"]["whosDeal"] == len(self.game_state["players"]) - 1):
             self.game_state["board"]["whosDeal"] = 0
         else:
@@ -115,13 +121,14 @@ class GameHandler():
         winner = self.findPlayer({"username": winner})
         winner = self.game_state["players"][winner]
         if tie == True:
-            if (self.game_state["teams"][0]["tricksWon"] == self.game_state["teams"][1]["tricksWon"]):
+            if (math.floor(self.game_state["teams"][0]["tricksWon"]) == 0 and math.floor(self.game_state["teams"][1]["tricksWon"]) == 0):
                 self.game_state["board"]["trickNum"] = 1
+                # There is a bug where the game derails on 3 ties in a row, fix that soon
             else:
                 self.game_state["board"]["trickNum"] = 3
         else:
             winningTeam = winner["team"]
-            if (self.game_state["board"]["firstTurn"]):
+            if (self.game_state["board"]["firstTrick"]):
                 self.game_state["teams"][winningTeam]["tricksWon"] = self.game_state["teams"][winningTeam]["tricksWon"] + 1.1
             else:
                 self.game_state["teams"][winningTeam]["tricksWon"] = self.game_state["teams"][winningTeam]["tricksWon"] + 1
@@ -133,7 +140,7 @@ class GameHandler():
                 player["isTurn"] = True
             else:
                 player["isTurn"] = False
-        self.game_state["board"]["firstTurn"] = False
+        self.game_state["board"]["firstTrick"] = False
         if (self.game_state["board"]["trickNum"] >= 3 or self.game_state["teams"][0]["tricksWon"] >= 2 or self.game_state["teams"][1]["tricksWon"] >= 2):
             self.roundOver()
 
@@ -232,6 +239,7 @@ class GameHandler():
         self.game_state["players"][0]["isTurn"] = True
         self.game_state["state"] = "inPlay"
         self.game_state["board"]["firstTurn"] = True
+        self.game_state["board"]["firstTrick"] = True
 
     # This function will generate a deck of cards to replace on that was used
     def generateDeck(self):

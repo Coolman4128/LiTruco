@@ -8,4 +8,4 @@ def home(request):
 
 def room(request, game_name):
     game = get_object_or_404(Game, id=game_name)
-    return render(request, "index.html", {"game_name": game_name})
+    return render(request, "test.html", {"game_name": game_name})

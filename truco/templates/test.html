@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiTruco</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .placeholder {
+            border: 2px dashed limegreen;
+        }
+
+        /* Container for the lobby popup */
+        .lobby-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 50%;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        z-index: 500;
+        text-align: center;
+        }
+
+        /* Team containers */
+        .team {
+        display: inline-block;
+        width: 45%;
+        margin: 10px 2.5%;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        }
+
+        /* Swap button */
+        .swap-button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin-top: 20px;
+        background-color: darkred;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        }
+
+        .swap-button:hover {
+        background-color: #a00;
+        }
+
+        /* Start button */
+        .start-button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin-top: 20px;
+        background-color: darkred;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        }
+
+        .start-button:hover {
+        background-color: #a00;
+        }
+
+        /* Container for the popup */
+        .username-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 35%;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        z-index: 1000;
+        }
+
+        /* Input field for the username */
+        .username-popup input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+        }
+
+        /* Submit button */
+        .username-popup input[type="submit"] {
+        width: 100%;
+        padding: 10px;
+        background-color: #8b0000;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        }
+
+        .username-popup input[type="submit"]:hover {
+        background-color: #a00;
+        }
+
+                /* The Overlay (background) */
+        .overlay {
+        /* Height & width depends on how you want to reveal the overlay (see JS below) */   
+        height: 100%;
+        width: 100%;
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 0;
+        top: 0;
+        background-color: rgb(0,0,0); /* Black fallback color */
+        background-color: rgba(0,0,0, 0.9); /* Black w/opacity */
+        overflow-x: hidden; /* Disable horizontal scroll */
+        transition: 0.5s; /* 0.5 second transition effect to slide in or slide down the overlay (height or width, depending on reveal) */
+        }
+
+        /* Position the content inside the overlay */
+        .overlay-content {
+        position: relative;
+        top: 25%; /* 25% from the top */
+        width: 100%; /* 100% width */
+        text-align: center; /* Centered text/links */
+        margin-top: 30px; /* 30px top margin to avoid conflict with the close button on smaller screens */
+        }
+
+        /* The navigation links inside the overlay */
+        .overlay a {
+        padding: 8px;
+        text-decoration: none;
+        font-size: 36px;
+        color: #818181;
+        display: block; /* Display block instead of inline */
+        transition: 0.3s; /* Transition effects on hover (color) */
+        }
+
+        /* When you mouse over the navigation links, change their color */
+        .overlay a:hover, .overlay a:focus {
+        color: #f1f1f1;
+        }
+
+        /* Position the close button (top right corner) */
+        .overlay .closebtn {
+        position: absolute;
+        top: 20px;
+        right: 45px;
+        font-size: 60px;
+        }
+
+        /* When the height of the screen is less than 450 pixels, change the font-size of the links and position the close button again, so they don't overlap */
+        @media screen and (max-height: 450px) {
+        .overlay a {font-size: 20px}
+        .overlay .closebtn {
+            font-size: 40px;
+            top: 15px;
+            right: 35px;
+        }
+        }
+
+        .card{
+        width:100%;
+        max-width:80px;
+        border: 2px solid #000;
+        border-radius: 8px;
+ }
+
+    </style>
+</head>
+<body class="bg-gray-300">
+    {{ game_name|json_script:"game-name" }}
+    <script src="/static/js/lodash.js"></script>
+    <script defer="defer" src="/static/js/client.js"></script>
+
+    <!-- The overlay -->
+    <div id="overlayMenu" class="overlay">
+
+    <!-- Button to close the overlay navigation -->
+  
+    <!-- Overlay content -->
+    <div class="overlay-content">
+        <div id = "lobbyMenu" class="lobby-popup">
+            <div class="team" id="team1">
+              <h3>Team 1</h3>
+              <h3 id = "T1"></h3>
+              <!-- List of players for Team 1 -->
+            </div>
+            <div class="team" id="team2">
+                <h3>Team 2</h3>
+                <h3 id = "T2"></h3>
+              <!-- List of players for Team 2 -->
+            </div>
+            <div class="team" id="link">
+                <h3>Game Link:</h3>
+                <h3><span id="current-url"></span></h3>
+                <script>document.addEventListener("DOMContentLoaded", function() {
+                    var currentUrl = window.location.href;
+                    document.getElementById("current-url").textContent = currentUrl;
+                });</script>
+              <!-- List of players for Team 2 -->
+            </div>
+            <button id = "teamSwap" class="swap-button">Swap Teams</button>
+            <button id = "start" class="start-button">Start Game</button>
+          </div>
+        <p id="card1p"></p>
+        <p id="card2p"></p>
+        <p id="card3p"></p>
+    
+        <p>Trump is:</p>
+        <p id="trump"></p>
+    
+        <p>Team 1 Points:</p>
+        <p id="T1P"></p>
+    
+        <p>Team 2 Points</p>
+        <p id="T2P"></p>
+    
+        <p>Team 1 Tricks:</p>
+        <p id="T1T"></p>
+    
+        <p>Team 2 Tricks</p>
+        <p id="T2T"></p>
+    
+    
+        <p>Your Turn?:</p>
+        <p id="yourTurn"></p>
+    
+    
+        <br><br>
+        
+        <div id="playButtons">
+            <button style="visibility:hidden" id="button1">3 Clowns</button>
+            <button id="button2">Truco</button>
+            <button id="button3">1st Card</button>
+            <button id="button4">2nd Card</button>
+            <button id="button5">3rd Card</button>
+            </div>
+        
+            <div id="trucoOptions" style="visibility:hidden">
+                <button id="fold">Fold</button>
+                <button id="play">Play</button>
+                <button id="raise">Raise</button>
+            </div>
+
+    <div>
+        <table>
+            <tr>
+              <th>Team 1</th>
+              <th>Team 2</th>
+            </tr>
+            <tr>
+              <td><p style="whiteSpace: pre-line" id="T1"></p></td>
+              <td><p style="whiteSpace: pre-line" id="T2"></p></td>
+            </tr>
+        </table>
+        <button id="teamSwap">Swap</button>
+    </div>
+
+    <br><br>
+
+    <button style="visibility:hidden" id="start">start!</button>
+
+    </div>
+  
+    </div>
+
+    <div id = "username-popup" class="username-popup">
+        <input id = "input1" type="text" placeholder="Enter username" />
+        <p style="visibility:hidden" id="userError">Invalid Username</p>
+        <input id = "inputButton1" type="submit" value="Submit" />
+        
+      </div>
+
+    <div class="flex flex-col h-screen">
+        <div class="bg-red-900 text-white flex justify-between items-center p-4">
+            <div>LiTruco</div>
+            <div>Menu Buttons Go Here</div>
+        </div>
+
+        <div class="flex flex-1">
+            <!-- Left Ad -->
+            <div class="w-1/12 bg-gray-400 flex justify-center items-center">
+                AD
+            </div>
+
+            <!-- Main Game Area -->
+            <div class="flex flex-col w-8/12 p-4 space-y-4 justify-center">
+                <!-- Teammate -->
+                <div class="flex flex-col items-center space-y-4">
+                    <div class="placeholder flex justify-center items-center p-4">
+                        <p id ="teamMateUser"></p>
+                    </div>
+                    <div class="placeholder p-4">Played Card Slot</div>
+                </div>
+
+                <!-- Opponents and Card Slots -->
+                <div class="flex justify-between items-start space-x-4">
+                    <div class="flex flex-col items-center space-y-4">
+                        <div class="placeholder flex-1 flex justify-center items-center p-4">
+                            <p id ="Opponent1User"></p>
+                        </div>
+                        <div class="placeholder p-4">Played Card Slot</div>
+                    </div>
+                    <div class="rounded-full bg-green-200 p-10"></div>
+                    <div class="flex flex-col items-center space-y-4">
+                        <div class="placeholder flex-1 flex justify-center items-center p-4">
+                            <p id ="Opponent2User"></p>
+                        </div>
+                        <div class="placeholder p-4">Played Card Slot</div>
+                    </div>
+                </div>
+
+                <!-- Played Card Slot for User -->
+                <div class="flex justify-center">
+                    <div id ="cardsPlayed" class="placeholder p-4"></div>
+                </div>
+
+                <!-- Card Slots -->
+                <div id="cardSlotContainer" class="mt-auto flex justify-around">
+                    <div id = "card1p" class="placeholder p-4"></div>
+                    <div id = "card2p"class="placeholder p-4"></div>
+                    <div id = "card3p" class="placeholder p-4"></div>
+                </div>
+            </div>
+
+            <!-- Chat Box -->
+            <div class="flex flex-col w-3/12 bg-white p-4">
+                <div id="chatBox" class="flex-1 overflow-y-auto border border-black">
+                    <!-- CHATS GO HERE -->
+                </div>
+                <div class="flex mt-4">
+                    <input id="chatInput" type="text" class="flex-1 border border-gray-500 p-2" placeholder="Type Chat Here">
+                    <button id="chatSubmit" class="bg-red-900 text-white p-2">Send</button>
+                </div>
+            </div>
+
+            <!-- Right Ad -->
+            <div class="w-1/12 bg-gray-400 flex justify-center items-center">
+                AD
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

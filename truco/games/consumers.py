@@ -13,6 +13,15 @@ group_count = {}
 games = {}
 
 
+
+# -----------------THINGS LEFT TO ADD----------------
+#3 Clown logic
+#Adding the game when someone gets to 12 or above points, and starting a new game
+# Handling 3 ties in a row
+# 11 Point Auto Truco and Truco Disablied, including giving the automatic option to fold
+# 11-11 blind hand - HIDE ALL CARD DATA FROM CLIENT, OR CHEATING WILL HAPPEN
+# Maybe playing cards upside down? Probabaly not neccesary
+#ADD CODE TO ALLOW NEW PLAYER TO JOIN AND TAKE LEFT PLAYERS POSITION
 class GameConsumer(WebsocketConsumer):
      
     # This Function will create a new player, place them on a team and then add them to the game state. Returns negative numbers on errors
@@ -23,13 +32,17 @@ class GameConsumer(WebsocketConsumer):
             nameList = nameList + [player["username"]]
 
         # This condition is if the user is logged in, so we call pull their username from there
-        if (str(self.user) != "AnonymousUser"):
+        if (str(self.user) != "AnonymousUser" and self.username == ""):
             self.usernameSet = True
             self.username = str(self.user)
             self.player["username"] = self.username
         #This sees if a username parameter was supplied, if it wasnt then return WARNING: Bug when a user puts thier name as "AnonymousUser" add checks for that on serverside code
         elif (username == "AnonymousUser"):
             return -1
+        #This happens if you are logged in and attempt to type in another username
+        elif (str(self.user) != "AnonymousUser" and self.username != ""):
+            return -1
+        
         #This is if a username parameter was supplied by the username input box on the client. Errors happen on certain conditions
         else:
             if (username == "" or username == "Player" or username in nameList):
@@ -89,31 +102,42 @@ class GameConsumer(WebsocketConsumer):
 
 
     #Called when a socket disconnects
-    #PUT CODE HERE TO HANDLE SOMEONE LEAVING DURING A GAME
     def disconnect(self, close_code):
+        currentState = self.game.game_state
+        
         # Leave room group
         async_to_sync(self.channel_layer.group_discard)(
             self.game_group_name, self.channel_name
         )
-        #Remove one of the connected sockets, IN THE FUTURE put code for removing player from game
+        #Remove one of the connected sockets
         group_count[self.game_group_name] = group_count[self.game_group_name] - 1
         
         #Find the player and remove them from the list
         playerIndex = self.game.findPlayer(self.player)
+        savedState = currentState["players"][playerIndex].copy()
+        savedState["username"] = "DISCONNECTED"
         if (playerIndex != -1):
             del self.game.game_state["players"][playerIndex]
         #This is here in case a player disconnects without typing in a name
         elif (self.player["username"] == "Player"):
             return
-
         else:
             print("MAJOR ISSUE")
 
-        #This code will send out a message to all the other players saying that this guy disconnected
-        async_to_sync(self.channel_layer.group_send)(
-        self.game_group_name, {"type": "game.newplayer", "code": "playerleft", "player": self.player, "data": self.game.game_state}
-        )
-
+        if(currentState["state"] != "lobby"):
+            #The game is in play
+            #This code will send out a message to all the other players saying that this guy disconnected
+            #Also will add a DISCONNECTED playre with the same info as the one who left.
+            currentState["state"] = "pause"
+            currentState["players"] = currentState["players"] + [savedState]
+            async_to_sync(self.channel_layer.group_send)(
+            self.game_group_name, {"type": "game.newplayer", "code": "playerleftGame", "player": self.player, "data": currentState}
+            )
+        else:
+            #The game is not in play
+            #This code will send out a message to all the other players saying that this guy disconnected
+            async_to_sync(self.channel_layer.group_send)(
+            self.game_group_name, {"type": "game.newplayer", "code": "playerleftLobby", "player": self.player, "data": currentState})
 
         #If there are no connected Sockets then delete the game
         if(group_count[self.game_group_name] == 0):
@@ -174,6 +198,7 @@ class GameConsumer(WebsocketConsumer):
             playIndex = self.game.findPlayer(curPlayer)
 
             if (curCard in curPlayer["hand"] and curPlayer["isTurn"] and currentState["state"] == "inPlay"):
+                currentState["board"]["firstTurn"] = False
                 currentState["board"]["cardsPlayed"] = currentState["board"]["cardsPlayed"] + [{"card":curCard, "player":curPlayer["username"]}]
                 curPlayer["hand"].remove(curCard)
                 curPlayer["isTurn"] = False
@@ -208,9 +233,10 @@ class GameConsumer(WebsocketConsumer):
                 )
             elif (vote == "raise" and self.player["username"] not in self.game.trucoVote):
                 curTeam = currentState["teams"][curPlayer["team"]]
-                if (curTeam["calledTruco"] != False or currentState["board"]["pointsWorth"] >= 12 or currentState["board"]["at11"] == True):
+                if (curTeam["calledTruco"] != False or currentState["board"]["pointsWorth"] >= 9 or currentState["board"]["at11"] == True):
                     self.send(json.dumps({"code": "error", "error": "invalidRaise",  "data": self.game.game_state}))
                     return
+                handle = self.game.handleTruco("raise")
                 self.game.trucoCalled(curPlayer)
                 async_to_sync(self.channel_layer.group_send)(
                 self.game_group_name, {"type": "game.truco", "code": "trucoCalled", "team":teamNum, "data": currentState}
@@ -241,7 +267,8 @@ class GameConsumer(WebsocketConsumer):
                 self.game_group_name, {"type": "game.truco", "code": "trucoCalled", "team":teamNum, "data": currentState}
                 )
 
-
+        elif (code == "threeClowns"):
+            pass
 
         else:
             pass
