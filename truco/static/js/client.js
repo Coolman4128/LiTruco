@@ -393,11 +393,11 @@ let players = {
                 drawBoard()
                 
                 if (player.isTurn === true){
-                    PB.style.visibility = "visible";
+                    
                     //Write Code to allow the player to take their turn
                 }
                 else{
-                    PB.style.visibility = "hidden";
+                   
                     //Write Code to allow the player to WAIT THEIR TURN
                 }
             }, 1000
@@ -406,17 +406,16 @@ let players = {
             else if (data.code === "cardPlayed") {
                 trucoCalled = false;
                 game_state = data.data
-                TO.style.visibility = "hidden";
                 updatePlayers()
                 drawCards()
                 check3Clowns()
                 drawBoard()
                 if (player.isTurn === true){
-                    PB.style.visibility = "visible";
+                    
                     //Write Code to allow the player to take their turn
                 }
                 else{
-                    PB.style.visibility = "hidden";
+                    
                     //Write Code to allow the player to WAIT THEIR TURN
                 }
             }
@@ -430,17 +429,16 @@ let players = {
                 drawBoard()
                 teamCalled = data.team
                 if (player.team === teamCalled) {
-                    TO.style.visibility = "hidden";
+                    
                 }
                 else {
-                    TO.style.visibility = "visible";
+                    
                 }
             }
 
             else if (data.code === "trucoAccepted"){
                 trucoCalled = false;
                 game_state = data.data
-                TO.style.visibility = "hidden";
                 updatePlayers()
                 drawCards()
                 check3Clowns()
@@ -449,7 +447,6 @@ let players = {
             else if (data.code === "trucoFolded"){
                 trucoCalled = false;
                 game_state = data.data
-                TO.style.visibility = "hidden";
                 updatePlayers()
                 drawCards()
                 check3Clowns()
