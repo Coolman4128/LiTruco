@@ -172,12 +172,81 @@
         border: 2px solid #000;
         border-radius: 8px;
         }
+        .cardYourTurn{
+        width:100%;
+        max-width:80px;
+        border: 2px solid #5121ff;
+        border-radius: 8px;
+        }
         .cardsmall{
         width:100%;
         max-width:40px;
         border: 1px solid #000;
         border-radius: 3px;
- }
+        }
+
+        .topMenus {
+            background-color: #3f3f3f;
+        }
+
+        .trucoButton {
+            background-color: #a00;
+            color: #f1f1f1;
+            height:150px;
+            width:150px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 22px;
+        }
+        .turnBox {
+            background-color: rgb(58, 58, 58);
+            color: #f1f1f1;
+            height:150px;
+            width:150px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            text-align: center;
+            
+        }
+        .foldButton {
+            background-color: #a00;
+            color: #f1f1f1;
+            height:150px;
+            width:150px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 22px;
+        }
+        .playButton {
+            background-color: rgb(25, 126, 0);
+            color: #f1f1f1;
+            height:150px;
+            width:150px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 22px;
+        }
+        .raiseButton {
+            background-color: rgb(91, 93, 192);
+            color: #f1f1f1;
+            height:150px;
+            width:150px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 22px;
+        }
+        .threeClowns {
+            background-color: #e4e71cda;
+            color: #000000da;
+            height:150px;
+            width:150px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 22px;
+        }
 
     </style>
 </head>
@@ -216,63 +285,21 @@
             <button id = "teamSwap" class="swap-button">Swap Teams</button>
             <button id = "start" class="start-button">Start Game</button>
           </div>
-        <p id="card1p"></p>
-        <p id="card2p"></p>
-        <p id="card3p"></p>
-    
-        <p>Trump is:</p>
-        <p id="trump"></p>
-    
-        <p>Team 1 Points:</p>
-        <p id="T1P"></p>
-    
-        <p>Team 2 Points</p>
-        <p id="T2P"></p>
-    
-        <p>Team 1 Tricks:</p>
-        <p id="T1T"></p>
-    
-        <p>Team 2 Tricks</p>
-        <p id="T2T"></p>
-    
-    
-        <p>Your Turn?:</p>
-        <p id="yourTurn"></p>
-    
-    
-        <br><br>
         
-        <div id="playButtons">
-            <button style="visibility:hidden" id="button1">3 Clowns</button>
-            <button id="button2">Truco</button>
-            <button id="button3">1st Card</button>
-            <button id="button4">2nd Card</button>
-            <button id="button5">3rd Card</button>
-            </div>
-        
-            <div id="trucoOptions" style="visibility:hidden">
-                <button id="fold">Fold</button>
-                <button id="play">Play</button>
-                <button id="raise">Raise</button>
-            </div>
 
-    <div>
-        <table>
-            <tr>
-              <th>Team 1</th>
-              <th>Team 2</th>
-            </tr>
-            <tr>
-              <td><p style="whiteSpace: pre-line" id="T1"></p></td>
-              <td><p style="whiteSpace: pre-line" id="T2"></p></td>
-            </tr>
-        </table>
-        <button id="teamSwap">Swap</button>
-    </div>
-
-    <br><br>
-
-    <button style="visibility:hidden" id="start">start!</button>
+        <div>
+            <table>
+                <tr>
+                  <th>Team 1</th>
+                  <th>Team 2</th>
+                </tr>
+                <tr>
+                  <td><p style="whiteSpace: pre-line" id="T1"></p></td>
+                  <td><p style="whiteSpace: pre-line" id="T2"></p></td>
+                </tr>
+            </table>
+            <button id="teamSwap">Swap</button>
+        </div>
 
     </div>
   
@@ -285,75 +312,91 @@
         
       </div>
 
-    <div class="flex flex-col h-screen">
-        <div class="bg-red-900 text-white flex justify-between items-center p-4">
+      <div class="flex flex-col h-screen">
+        <div class="bg-red-900 text-white flex justify-between items-center border-2 border-black p-4">
             <div>LiTruco</div>
             <div>Menu Buttons Go Here</div>
         </div>
-
-        <div class="flex flex-1">
+    
+        <div class="flex flex-1 min-h-0 relative">
             <!-- Left Ad -->
-            <div class="w-1/12 bg-gray-400 flex justify-center items-center">
+            <div class="w-1/12 bg-gray-400 flex justify-center border-2 border-black items-center">
                 AD
             </div>
-
+    
             <!-- Main Game Area -->
-            <div class="flex flex-col w-8/12 p-4 space-y-4 justify-center">
+            <div class="flex flex-col w-8/12 h-full p-4 space-y-4 border-2 border-black relative">
                 <!-- Teammate -->
                 <div class="flex flex-col items-center space-y-4">
                     <div class="placeholder flex justify-center items-center p-4">
-                        <p id ="teamMateUser"></p>
+                        <p id="teamMateUser"></p>
                     </div>
                     <div id="teammateCard" class="placeholder p-4"></div>
                 </div>
-
+    
                 <!-- Opponents and Card Slots -->
                 <div class="flex justify-between items-start space-x-4">
                     <div class="flex flex-col items-center space-y-4">
                         <div class="placeholder flex-1 flex justify-center items-center p-4">
-                            <p id ="Opponent1User"></p>
+                            <p id="Opponent1User"></p>
                         </div>
-                        <div id="opp1Card"class="placeholder p-4"></div>
+                        <div id="opp1Card" class="placeholder p-4"></div>
                     </div>
                     <div class="rounded-full bg-green-200 p-10"></div>
                     <div class="flex flex-col items-center space-y-4">
                         <div class="placeholder flex-1 flex justify-center items-center p-4">
-                            <p id ="Opponent2User"></p>
+                            <p id="Opponent2User"></p>
                         </div>
                         <div id="opp2Card" class="placeholder p-4"></div>
                     </div>
                 </div>
-
+    
                 <!-- Played Card Slot for User -->
                 <div class="flex justify-center">
-                    <div id ="selfCard" class="placeholder p-4"></div>
+                    <div id="selfCard" class="placeholder p-4"></div>
                 </div>
-
+    
                 <!-- Card Slots -->
                 <div id="cardSlotContainer" class="mt-auto flex justify-center">
-                    <div id = "card1p" class="placeholder p-4"></div>
-                    <div id = "card2p"class="placeholder p-4"></div>
-                    <div id = "card3p" class="placeholder p-4"></div>
+                    <div id="card1p" class="placeholder p-4"></div>
+                    <div id="card2p" class="placeholder p-4"></div>
+                    <div id="card3p" class="placeholder p-4"></div>
+                </div>
+    
+                <!-- Top left menu -->
+                <div class="absolute top-0 left-2 p-4 text-white topMenus shadow-lg rounded">
+                    <p id="ourTeam">Our Team:</p>
+                    <p id="theirTeam">Their Team:</p>
+                </div>
+    
+                <!-- Top right menu -->
+                <div class="absolute top-0 right-2 p-4 text-white topMenus shadow-lg rounded">
+                    <p id="trump">Trump:</p>
+                    <p id="pointsWorth">Round Worth:</p>
+                </div>
+    
+                <!-- Bottom Menu -->
+                <div id="bottomMenu" class="absolute bottom-0 left-1/2 transform -translate-x-1/2 p-4 space-x-5 flex justify-center rounded">
                 </div>
             </div>
-
+    
             <!-- Chat Box -->
-            <div class="flex flex-col w-3/12 bg-white p-4">
+            <div class="flex flex-col w-3/12 h-full border-2 border-black bg-white p-4">
                 <div id="chatBox" class="flex-1 overflow-y-auto border border-black">
-                    <!-- CHATS GO HERE -->
+                    <p>Chat Starts Here:</p>
                 </div>
                 <div class="flex mt-4">
                     <input id="chatInput" type="text" class="flex-1 border border-gray-500 p-2" placeholder="Type Chat Here">
                     <button id="chatSubmit" class="bg-red-900 text-white p-2">Send</button>
                 </div>
             </div>
-
+    
             <!-- Right Ad -->
-            <div class="w-1/12 bg-gray-400 flex justify-center items-center">
+            <div class="w-1/12 bg-gray-400 flex justify-center border-2 border-black items-center">
                 AD
             </div>
         </div>
     </div>
-
+    
 </body>
 </html>

@@ -25,7 +25,7 @@ games = {}
 class GameConsumer(WebsocketConsumer):
      
     # This Function will create a new player, place them on a team and then add them to the game state. Returns negative numbers on errors
-    def createNewPlayer(self, game, username="AnonymousUser"):
+    def createNewPlayer(self, game, username="AnonymousUser", index = -1):
         
         nameList = []
         for player in game.game_state["players"]:
@@ -58,7 +58,7 @@ class GameConsumer(WebsocketConsumer):
 
         #Add player to the game state, and then send a socket to the player to identify themself
         #Then send a socket to everyone saying to add them to the list of players
-        game.game_state["players"] += [self.player]
+        game.game_state["players"].insert(index, self.player)
         print( game.game_state["players"])
         self.send(json.dumps({"code": "yourplayer", "player": self.player, "data": self.game.game_state}))
         async_to_sync(self.channel_layer.group_send)(
@@ -91,11 +91,33 @@ class GameConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(
             self.game_group_name, self.channel_name
         )
-        
+
         # Accept the connection and add one to the socket count for this game
         self.send(json.dumps({"code": "start_state", "data": self.game.game_state}))
-        self.createNewPlayer(self.game)
-        group_count[self.game_group_name] = group_count.get(self.game_group_name, 0) + 1
+
+        if (self.game.game_state["state"] == "lobby"):
+            self.createNewPlayer(self.game)
+            group_count[self.game_group_name] = group_count.get(self.game_group_name, 0) + 1
+        else:
+            print("made it here")
+            disconnectedIndex = self.game.findPlayer({"username": "DISCONNECTED"})
+            if disconnectedIndex == -1:
+                #There are no disconnected players, deal with this
+                pass
+            else:
+                #There are disconnected players, take one of their slots
+                print("sadly made it here")
+                self.player = self.game.game_state["players"][disconnectedIndex].copy()
+                self.player["username"] = "Player"
+                self.game.game_state["players"].remove(self.game.game_state["players"][disconnectedIndex])
+                self.createNewPlayer(self.game, index=disconnectedIndex)
+            group_count[self.game_group_name] = group_count.get(self.game_group_name, 0) + 1
+                
+
+        
+        
+        
+        
 
 
 
@@ -167,11 +189,26 @@ class GameConsumer(WebsocketConsumer):
         #This code will be called when a player sends the "start" command telling the server the player is ready to start the game
         elif (code == "start"):
             
+            if (currentState["state"] == "pause"):
+                if (self.game.findPlayer({"username": "DISCONNECTED"}) == -1):
+                    #There are no more disconnected players, carry on
+                    currentState["state"] = "inPlay"
+                    async_to_sync(self.channel_layer.group_send)(
+                    self.game_group_name, {"type": "game.sendState", "code": "start", "data": currentState}
+                    )
+                    return
+                else:
+                    #There are still disconnected players stayed paused
+                    async_to_sync(self.channel_layer.group_send)(
+                    self.game_group_name, {"type": "game.sendState", "code": "start", "data": currentState}
+                    )
+                    return
+                
 
             #In this if put all the conditions that could stop the game from starting 
             if len(currentState["players"]) < 4:
                 async_to_sync(self.channel_layer.group_send)(
-                self.game_group_name, {"type": "game.message", "code": "message", "data": "Conditions not met to start game"}
+                self.game_group_name, {"type": "game.message", "code": "no", "message": "Conditions not met to start game"}
                 )
 
             else:
@@ -191,6 +228,14 @@ class GameConsumer(WebsocketConsumer):
             self.game_group_name, {"type": "game.newplayer", "code": "swap", "player": text_data_json["player"], "data": currentState}
             )
 
+        elif(code == "message"):
+            #IN THE FUTURE VERIFY THE MESSAGE HERE
+            message = text_data_json["message"]
+            async_to_sync(self.channel_layer.group_send)(
+            self.game_group_name, {"type": "game.chatmessage", "code": "message", "player": text_data_json["player"], "message": message}
+            )
+
+
         elif (code == "playCard"):
             curPlayer = text_data_json["player"]
             curCard = text_data_json["card"]
@@ -201,19 +246,30 @@ class GameConsumer(WebsocketConsumer):
                 currentState["board"]["firstTurn"] = False
                 currentState["board"]["cardsPlayed"] = currentState["board"]["cardsPlayed"] + [{"card":curCard, "player":curPlayer["username"]}]
                 curPlayer["hand"].remove(curCard)
+                async_to_sync(self.channel_layer.group_send)(
+                    self.game_group_name, {"type": "game.sendState", "code": "cardPlayed", "data": currentState}
+                    )
                 curPlayer["isTurn"] = False
                 currentState["players"][playIndex] = curPlayer
+
+
                 if (playIndex == playerLength):
                     currentState["players"][0]["isTurn"] = True
                 else:
                     currentState["players"][playIndex + 1]["isTurn"] = True
-                if (len(currentState["board"]["cardsPlayed"]) == len(currentState["players"])):
-                    print("made it here")
-                    self.game.trickOver()
 
-                async_to_sync(self.channel_layer.group_send)(
-                self.game_group_name, {"type": "game.sendState", "code": "cardPlayed", "data": currentState}
-                )
+                if (len(currentState["board"]["cardsPlayed"]) == len(currentState["players"])):
+                    self.game.trickOver()
+                    async_to_sync(self.channel_layer.group_send)(
+                    self.game_group_name, {"type": "game.sendState", "code": "start", "data": currentState}
+                    )
+                else:
+                    async_to_sync(self.channel_layer.group_send)(
+                    self.game_group_name, {"type": "game.sendState", "code": "cardPlayed", "data": currentState}
+                    )
+                
+                
+                
             else:
                 self.send(json.dumps({"code": "error", "error": "invalidplay",  "data": self.game.game_state}))
 
@@ -284,6 +340,12 @@ class GameConsumer(WebsocketConsumer):
         message = event["message"]
         # Send message to WebSocket using the send method. Every socket in the group heard this event so it sends it to everyone, but send itself only sends to one client.
         self.send(text_data=json.dumps({"code": code, "data": message}))
+    def game_chatmessage(self, event):
+        code = event["code"]
+        message = event["message"]
+        player = event["player"]
+        # Send message to WebSocket using the send method. Every socket in the group heard this event so it sends it to everyone, but send itself only sends to one client.
+        self.send(text_data=json.dumps({"code": code, "message": message, "player": player}))
 
     def game_error(self, event):
         code = event["code"]

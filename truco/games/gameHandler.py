@@ -91,6 +91,7 @@ class GameHandler():
         self.game_state["teams"][1]["calledTruco"] = False
         self.game_state["board"]["trickNum"] = 0
         self.game_state["board"]["pointsWorth"] = 1
+        self.game_state["state"] = "inPlay"
         self.game_state["board"]["deck"] = self.generateDeck()
         random.shuffle(self.game_state["board"]["deck"])
         self.deal()

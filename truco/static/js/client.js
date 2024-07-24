@@ -42,6 +42,8 @@ let game_state;
 let player = null;
 let logged_in = false;
 let canVote = false;
+let trucoCalled = false;
+let threeClowns = false;
 let players = {
     "teammate": null,
     "opp1": null,
@@ -49,8 +51,13 @@ let players = {
 }
 
 
+        drawUsernames = function () {
+            document.getElementById("teamMateUser").innerHTML = players.teammate.username
+            document.getElementById("Opponent1User").innerHTML = players.opp1.username
+            document.getElementById("Opponent2User").innerHTML = players.opp2.username
+        }
+
         drawPlayedCards = function () {
-            console.log(game_state.board.cardsPlayed)
             document.getElementById("teammateCard").innerHTML = ""
             document.getElementById("opp2Card").innerHTML = ""
             document.getElementById("opp1Card").innerHTML = ""
@@ -122,15 +129,119 @@ let players = {
             }
         }
 
-        drawBoard = function() {
+        drawLeftMenu = function() {
+            //In this menu the team scores are gonna go here, including points and tricks
             teams = game_state.teams
+            yourTeam = teams[player.team]
+            otherTeam = teams[(1 - player.team)]
+            trickView = ""
+            for(let x = 0; x < Math.floor(yourTeam.tricksWon); x++){
+                trickView = trickView + "🟢"
+            }
+            document.getElementById("ourTeam").innerHTML = "Our Team: " + trickView + " - " + yourTeam.points
+            trickView = ""
+            for(let x = 0; x < Math.floor(otherTeam.tricksWon); x++){
+                trickView = trickView + "🟢"
+            }
+            document.getElementById("theirTeam").innerHTML = "Their Team: " + trickView + " - " + otherTeam.points
+        }
+
+        drawRightMenu = function() {
+            // In this menu card information, like what trump is is gonna go here
+            trumpDict = {
+                "A": "Ace's",
+                "Q": "Queen's",
+                "K": "King's",
+                "J": "Jack's",
+                "7": "7's",
+                "6": "6's",
+                "5": "5's",
+                "4": "4's",
+                "3": "3's",
+                "2": "2's"
+            }
             board = game_state.board
-            boardSlots.trump.innerHTML = board.trump
-            boardSlots.t1p.innerHTML = teams["0"].points
-            boardSlots.t2p.innerHTML = teams["1"].points
-            boardSlots.t1t.innerHTML = teams["0"].tricksWon
-            boardSlots.t2t.innerHTML = teams["1"].tricksWon
-            boardSlots.yt.innerHTML = player.isTurn
+            trump = board.trump
+            trumpText = trumpDict[trump]
+            roundWorth = board.pointsWorth
+            document.getElementById("pointsWorth").innerHTML = "Round Worth: " + roundWorth
+            document.getElementById("trump").innerHTML = "Trump: " + trumpText
+        }
+
+        drawBottomMenu = function() {
+
+
+            draw3ClownsButton = ()=>{
+                return "<button onclick='call3Clowns()' class = 'threeClowns'>🤡🤡🤡<br>3 Clowns</button>"
+            }
+            drawTrucoButton = ()=>{
+                return "<button onclick='callTruco()' class='trucoButton'>✋<br>TRUCO</button>"
+            }
+            whosTurnBox = (username)=>{
+                return "<p class='turnBox'>It's " + username + "'s turn</p>"
+            }
+            trucoOptions = (canRaise = true)=> {
+                let fold = "<button onclick='fold()' class='foldButton'>👎<br>FOLD</button>"
+                let raise = "<button onclick='raise()' class='raiseButton'>☝️<br>RAISE</button>"
+                let play = "<button onclick='play()' class='playButton'>👍<br>PLAY</button>"
+                if (canRaise){
+
+                }
+                else{
+                    raise = ""
+                }
+                return fold + raise + play
+            }
+
+            whatTeam = 0
+            playerTurn = ""
+            game_state.teams.forEach((element, index) => {
+                if (element.calledTruco === true){
+                    whatTeam = index
+                }
+            })
+            game_state.players.forEach(element => {
+                if (element.isTurn === true){
+                    playerTurn = element.username
+                }
+            })
+            if (player.isTurn === true && trucoCalled === false){
+                newHTML = drawTrucoButton() //Need to put the truco button, and maybe the 3 clowns button
+                if (threeClowns === true){
+                    newHTML += draw3ClownsButton()
+                }
+                document.getElementById("bottomMenu").innerHTML = newHTML
+            }
+            else if (player.isTurn === true && trucoCalled === true && whatTeam === player.team){
+                newHTML = "<p class='turnBox'>Waiting on opponents</p>"  //Put a box saying "waiting on Opponents Call"
+                document.getElementById("bottomMenu").innerHTML = newHTML
+            }
+            else if (player.isTurn === true && trucoCalled === true && whatTeam != player.team){
+                newHTML = trucoOptions(game_state.board.pointsWorth < 9) //Put The Truco Options
+                document.getElementById("bottomMenu").innerHTML = newHTML
+            }
+            else if(player.isTurn === false && trucoCalled === false){
+                newHTML = whosTurnBox(playerTurn) //Put a box saying whos Turn it is, and maybe a box for 3 clowns
+                if (threeClowns === true){
+                    newHTML += draw3ClownsButton()
+                }
+                document.getElementById("bottomMenu").innerHTML = newHTML
+            }
+            else if(player.isTurn === false && trucoCalled === true && whatTeam === player.team){
+                newHTML = "<p class='turnBox'>Waiting on opponents</p>" 
+                document.getElementById("bottomMenu").innerHTML = newHTML
+            }
+            else if(player.isTurn === false && trucoCalled === true && whatTeam != player.team){
+                newHTML = trucoOptions(game_state.board.pointsWorth < 9) //Put the truco buttons
+                document.getElementById("bottomMenu").innerHTML = newHTML
+            }
+        }
+
+        drawBoard = function() {
+            drawUsernames()
+            drawLeftMenu()
+            drawRightMenu()
+            drawBottomMenu()
             drawPlayedCards()
 
         }
@@ -165,8 +276,6 @@ let players = {
                     newindex = newindex + 1
             }
         }
-        console.log(player)
-        console.log(players)
     }
 
         drawLobby = function(){
@@ -227,10 +336,10 @@ let players = {
 
         check3Clowns = function() {
             if (game_state.board.firstTurn === true && (game_state.teams["0"].calledTruco === false && game_state.teams["1"].calledTruco === false)) {
-                THREEC.style.visibility = "visible"
+                threeClowns = true
             }
             else {
-                THREEC.style.visibility = "hidden"
+                threeClowns = false
             }
         }
 
@@ -243,9 +352,7 @@ let players = {
                 closeLobby()
                 game_state = data.data 
                 if (game_state.state === "lobby"){
-                    game_state.players.forEach((element) => {
-                        drawLobby()
-                    })
+                    drawLobby()
                 }
             }
             else if (data.code === "yourplayer"){
@@ -253,7 +360,6 @@ let players = {
                 openLobby()
                 player = data.player
                 game_state = data.data
-                console.log(player)
                 closeUsername()
             }
             else if (data.code === "newplayer"){
@@ -275,13 +381,17 @@ let players = {
                 checkforStart()  
             }
             else if (data.code === "start"){
+
+                // at some point add an dealing animation here, for now I will delay the call.
+                trucoCalled = false;
+                setTimeout(()=>{
                 game_state = data.data
                 closeNav()
                 updatePlayers()
                 drawCards()
-                drawBoard()
                 check3Clowns()
-                console.log(player)
+                drawBoard()
+                
                 if (player.isTurn === true){
                     PB.style.visibility = "visible";
                     //Write Code to allow the player to take their turn
@@ -290,14 +400,17 @@ let players = {
                     PB.style.visibility = "hidden";
                     //Write Code to allow the player to WAIT THEIR TURN
                 }
+            }, 1000
+            )
             }
             else if (data.code === "cardPlayed") {
+                trucoCalled = false;
                 game_state = data.data
                 TO.style.visibility = "hidden";
                 updatePlayers()
                 drawCards()
-                drawBoard()
                 check3Clowns()
+                drawBoard()
                 if (player.isTurn === true){
                     PB.style.visibility = "visible";
                     //Write Code to allow the player to take their turn
@@ -309,9 +422,12 @@ let players = {
             }
 
             else if (data.code === "trucoCalled"){
+                trucoCalled = true;
                 game_state = data.data
                 updatePlayers()
+                drawCards()
                 check3Clowns()
+                drawBoard()
                 teamCalled = data.team
                 if (player.team === teamCalled) {
                     TO.style.visibility = "hidden";
@@ -322,30 +438,39 @@ let players = {
             }
 
             else if (data.code === "trucoAccepted"){
+                trucoCalled = false;
                 game_state = data.data
                 TO.style.visibility = "hidden";
                 updatePlayers()
                 drawCards()
-                drawBoard()
                 check3Clowns()
+                drawBoard()
             }
             else if (data.code === "trucoFolded"){
+                trucoCalled = false;
                 game_state = data.data
                 TO.style.visibility = "hidden";
                 updatePlayers()
                 drawCards()
-                drawBoard()
                 check3Clowns()
+                drawBoard()
+            }
+            else if (data.code === "message") {
+                message = data.message
+                playerSent = data.player
+                document.getElementById("chatBox").innerHTML += "<p>" + playerSent.username + ": " + message + "</p>"
+                var messageBody = document.getElementById('chatBox');
+                messageBody.scrollTop = messageBody.scrollHeight - messageBody.clientHeight;
             }
             else if (data.code === "error"){
                 if (data.error === "invalidusername"){
                     UE.style.visibility = "visible";
                 }
+                console.log(data.error)
             }
             
-            else if (data.code === "")
-            
-            console.log(data.data);
+            else if (data.code === ""){
+        }
         };
 
 
@@ -369,6 +494,17 @@ let players = {
             messageInputDom.value = '';
         };
 
+        document.getElementById('chatSubmit').onclick = function(e) {
+            const messageInputDom = document.getElementById("chatInput")
+            const message = messageInputDom.value;
+            gameSocket.send(JSON.stringify({
+                'code': "message",
+                'player': player,
+                'message': message
+            }));
+            messageInputDom.value = '';
+        };
+
         
         //This function is what happnes when the start button is pressed. Write code for starting the game here
         document.getElementById('start').onclick = function(e) {
@@ -377,21 +513,31 @@ let players = {
             }));
         };
 
-        //document.getElementById('fold').onclick = function(e) {
-            //gameSocket.send(JSON.stringify({
-                //'code': "vote",
-                //"vote": "fold",
-                //"player": player
-            //}));
-        //};
+        call3Clowns = function () {
 
-        //document.getElementById('play').onclick = function(e) {
-            //gameSocket.send(JSON.stringify({
-                //'code': "vote",
-                //"vote": "play",
-                //"player": player
-            //}));
-        //};
+        }
+
+        play = function() {
+            gameSocket.send(JSON.stringify({
+                'code': "vote",
+                "vote": "play",
+                "player": player
+            }));
+        }
+        fold = function() {
+            gameSocket.send(JSON.stringify({
+                'code': "vote",
+                "vote": "fold",
+                "player": player
+            }));
+        }
+        raise = function() {
+            gameSocket.send(JSON.stringify({
+                'code': "vote",
+                "vote": "raise",
+                "player": player
+            }));
+        }
 
         function openNav() {
             document.getElementById("overlayMenu").style.display = "block";
@@ -412,42 +558,6 @@ let players = {
           function closeUsername() {
             document.getElementById("username-popup").style.display = "none";
           }
-
-        //document.getElementById('raise').onclick = function(e) {
-            //gameSocket.send(JSON.stringify({
-                //'code': "vote",
-                //"vote": "raise",
-                //"player": player
-           // }));
-        //};
-
-        /*
-        document.getElementById('button3').onclick = function(e) {
-            if (player.hand.length >= 1){
-                playCard(player.hand["0"])
-            }
-        };
-        document.getElementById('button4').onclick = function(e) {
-            if (player.hand.length >= 2){
-                playCard(player.hand["1"])
-            }
-        };
-        document.getElementById('button5').onclick = function(e) {
-            if (player.hand.length >= 3){
-                playCard(player.hand["2"])
-            }
-        };
-
-        document.getElementById('button1').onclick = function(e) {
-            if (player.hand.length >= 3){
-                playCard(player.hand["2"])
-            }
-        };
-
-        document.getElementById('button2').onclick = function(e) {
-            callTruco()
-        };
-        */
 
 
         //This function is what happnes when the swap button is pressed. Write code for swapping teams here
