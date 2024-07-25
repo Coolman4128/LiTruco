@@ -49,7 +49,56 @@ let players = {
     "opp1": null,
     "opp2": null
 }
+            function showOverlay() {
+                const overlay = document.getElementById('gameMenuOverlay');
+                overlay.classList.add('show');
+                }   
 
+                function hideOverlay() {
+                    document.getElementById('gameMenuOverlay').classList.remove('show');
+                }
+
+        showGamePopup = function(gameEvent){
+            const gamePopup = document.getElementById("gameMenuOverlay")
+            if (gameEvent === "trucoCalled"){
+                gamePopup.classList.add("badMessage")
+                gamePopup.classList.remove("goodMessage")
+                if (game_state.board.pointsWorth === 1){
+                gamePopup.innerHTML = "<p>❗❗<br>TRUCO<br>❗❗</p>"
+                }
+                else if (game_state.board.pointsWorth === 3){
+                    gamePopup.innerHTML = "<p>🫢<br>SEIS!!</p>"
+                }
+                else if (game_state.board.pointsWorth === 6){
+                    gamePopup.innerHTML = "<p>🤯<br>NOVE!!</p>"
+                }
+                else if (game_state.board.pointsWorth === 9){
+                    gamePopup.innerHTML = "<p>😱<br>DOZE!!</p>"
+                }
+            }
+            else if (gameEvent === "trucoFolded"){
+                gamePopup.classList.remove("badMessage")
+                gamePopup.classList.add("goodMessage")
+                gamePopup.innerHTML = "<p>😮‍💨<br>Truco Folded</p>"
+            }
+            else if (gameEvent === "trucoAccepted"){
+                gamePopup.classList.remove("badMessage")
+                gamePopup.classList.add("goodMessage")
+                gamePopup.innerHTML = "<p>🤞<br>Truco Accepted</p>"
+            }
+            else if (gameEvent === "trucoRaised"){
+                gamePopup.classList.add("badMessage")
+                gamePopup.classList.remove("goodMessage")
+                gamePopup.innerHTML = "<p>🤯<br>RAISED</p>"
+            }
+            else if (gameEvent === "threeClowns"){
+
+            }
+            else if (gameEvent === "gameOver"){
+
+            }
+            showOverlay()
+        }
 
         drawUsernames = function () {
             document.getElementById("teamMateUser").innerHTML = players.teammate.username
@@ -66,6 +115,7 @@ let players = {
                 if (element.player === players.teammate.username) {
                     cardslot = document.getElementById("teammateCard")
                     cardslot.innerHTML = cardslot.innerHTML + '<img class="cardsmall" src="/static/media/cards/' + element.card.value + element.card.suit + '.jpg" alt="' + element.card.value + element.card.suit + '">'
+                    
                 }
                 else if (element.player === players.opp1.username) {
                     cardslot = document.getElementById("opp1Card")
@@ -118,7 +168,12 @@ let players = {
             cardContain = document.getElementById("cardSlotContainer")
             cardContain.innerHTML = ""
             player.hand.forEach((element, index)=> {
-                cardContain.innerHTML = cardContain.innerHTML + '<button class = "mx-4" id="cardbutton' + index + '" onclick="playCardButton(' + index + ')"> <img class="card" src="/static/media/cards/' + element.value + element.suit + '.jpg" alt="' + element.value + element.suit + '"></button>'
+                if (player.isTurn){
+                cardContain.innerHTML = cardContain.innerHTML + '<button class = "mx-4" id="cardbutton' + index + '" onclick="playCardButton(' + index + ')"> <img class="card YourTurn" src="/static/media/cards/' + element.value + element.suit + '.jpg" alt="' + element.value + element.suit + '"></button>'
+                }
+                else{
+                    cardContain.innerHTML = cardContain.innerHTML + '<button class = "mx-4" id="cardbutton' + index + '" onclick="playCardButton(' + index + ')"> <img class="card" src="/static/media/cards/' + element.value + element.suit + '.jpg" alt="' + element.value + element.suit + '"></button>'
+                    }
             })
             
         }
@@ -205,8 +260,16 @@ let players = {
                     playerTurn = element.username
                 }
             })
-            if (player.isTurn === true && trucoCalled === false){
-                newHTML = drawTrucoButton() //Need to put the truco button, and maybe the 3 clowns button
+            if (player.isTurn === true && (trucoCalled === false && game_state.teams[player.team].calledTruco === false) && game_state.board.pointsWorth != 12){
+                newHTML = "<p class='turnBox'>It's Your Turn</p>"
+                newHTML += drawTrucoButton() //Need to put the truco button, and maybe the 3 clowns button
+                if (threeClowns === true){
+                    newHTML += draw3ClownsButton()
+                }
+                document.getElementById("bottomMenu").innerHTML = newHTML
+            }
+            else if (player.isTurn === true && trucoCalled === false) {
+                newHTML = "<p class='turnBox'>It's Your Turn</p>" //No Button
                 if (threeClowns === true){
                     newHTML += draw3ClownsButton()
                 }
@@ -384,10 +447,11 @@ let players = {
 
                 // at some point add an dealing animation here, for now I will delay the call.
                 trucoCalled = false;
-                setTimeout(()=>{
                 game_state = data.data
                 closeNav()
                 updatePlayers()
+                setTimeout(()=>{
+                
                 drawCards()
                 check3Clowns()
                 drawBoard()
@@ -400,7 +464,7 @@ let players = {
                    
                     //Write Code to allow the player to WAIT THEIR TURN
                 }
-            }, 1000
+            }, 2500
             )
             }
             else if (data.code === "cardPlayed") {
@@ -426,7 +490,9 @@ let players = {
                 updatePlayers()
                 drawCards()
                 check3Clowns()
-                drawBoard()
+                showGamePopup("trucoCalled")
+                setTimeout(drawBoard, 2500)
+                setTimeout(hideOverlay, 2500)
                 teamCalled = data.team
                 if (player.team === teamCalled) {
                     
@@ -442,7 +508,9 @@ let players = {
                 updatePlayers()
                 drawCards()
                 check3Clowns()
-                drawBoard()
+                showGamePopup("trucoAccepted")
+                setTimeout(drawBoard, 500)
+                setTimeout(hideOverlay, 2500)
             }
             else if (data.code === "trucoFolded"){
                 trucoCalled = false;
@@ -450,7 +518,9 @@ let players = {
                 updatePlayers()
                 drawCards()
                 check3Clowns()
-                drawBoard()
+                showGamePopup("trucoFolded")
+                setTimeout(drawBoard, 500)
+                setTimeout(hideOverlay, 2500)
             }
             else if (data.code === "message") {
                 message = data.message

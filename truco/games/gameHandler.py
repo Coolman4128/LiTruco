@@ -80,11 +80,7 @@ class GameHandler():
             winningTeam = winner
         winningTeam["points"] = winningTeam["points"] + self.game_state["board"]["pointsWorth"]
 
-    #This function handles what will happen when a round is over, it awards points and then sets up for the next round
-    def roundOver(self, winner = "default"):
-        self.game_state["board"]["cardsPlayed"] = []
-        self.trucoVote = []
-        self.awardPoints(winner = winner)
+    def initGame(self):
         self.game_state["teams"][0]["tricksWon"] = 0
         self.game_state["teams"][1]["tricksWon"] = 0
         self.game_state["teams"][0]["calledTruco"] = False
@@ -92,15 +88,21 @@ class GameHandler():
         self.game_state["board"]["trickNum"] = 0
         self.game_state["board"]["pointsWorth"] = 1
         self.game_state["state"] = "inPlay"
-        self.game_state["board"]["deck"] = self.generateDeck()
-        random.shuffle(self.game_state["board"]["deck"])
-        self.deal()
-        if(self.game_state["teams"][0]["points"] == 11 and self.game_state["teams"][1]["points"] == 11):
-            self.game_state["board"]["blind"] = True 
-        if (self.game_state["teams"][0]["points"] == 11 or self.game_state["teams"][1]["points"] == 11):
-            self.game_state["board"]["at11"] = True 
         self.game_state["board"]["firstTurn"] = True
         self.game_state["board"]["firstTrick"] = True
+        self.game_state["board"]["deck"] = self.generateDeck()
+        random.shuffle(self.game_state["board"]["deck"])
+
+        if(self.game_state["teams"][0]["points"] == 11 and self.game_state["teams"][1]["points"] == 11):
+            self.game_state["board"]["blind"] = True 
+        else:
+            self.game_state["board"]["blind"] = False
+
+        if (self.game_state["teams"][0]["points"] == 11 or self.game_state["teams"][1]["points"] == 11):
+            self.game_state["board"]["at11"] = True 
+        else:
+            self.game_state["board"]["at11"] = False
+
         if (self.game_state["board"]["whosDeal"] == len(self.game_state["players"]) - 1):
             self.game_state["board"]["whosDeal"] = 0
         else:
@@ -111,10 +113,36 @@ class GameHandler():
                 self.game_state["players"][x]["isTurn"] = True  
             else:
                 self.game_state["players"][x]["isTurn"] = False 
+
+        if (self.game_state["board"]["at11"] == True and self.game_state["board"]["blind"] == False):
+            self.game_state["teams"][0]["calledTruco"] = True
+            self.game_state["teams"][1]["calledTruco"] = True
+            self.game_state["state"] = "11roundStart"
+        elif (self.game_state["board"]["at11"] == True and self.game_state["board"]["blind"] == True):
+            self.game_state["teams"][0]["calledTruco"] = True
+            self.game_state["teams"][1]["calledTruco"] = True
+            self.game_state["state"] = "blindStart"
         
 
-    def newTrick(self):
-        pass
+    #This function handles what will happen when a round is over, it awards points and then sets up for the next round
+    def roundOver(self, winner = "default"):
+        self.game_state["board"]["cardsPlayed"] = []
+        self.trucoVote = []
+        self.awardPoints(winner = winner)
+        self.initGame()
+        if (self.game_state["teams"][0]["points"] >= 12 or self.game_state["teams"][1]["points"] >= 12):
+            return "gameOver"
+        
+        if (self.game_state["state"] == "blindStart"):
+            self.deal()
+            return "blindStart"
+        elif (self.game_state["state"] == "11roundStart"):
+            self.deal()
+            return "11Round"
+        else:
+            self.deal()
+            return "normal"
+                    
 
     #This function will handle the end of a trick, including weather to start a new round, start a new trick, etc
     def trickOver(self):

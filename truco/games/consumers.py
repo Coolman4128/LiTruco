@@ -15,13 +15,14 @@ games = {}
 
 
 # -----------------THINGS LEFT TO ADD----------------
+#GO THROUGH AND MAKE SURE THE SERVER VALIDATES ALLLLLLLL USER INPUT
 #3 Clown logic
-#Adding the game when someone gets to 12 or above points, and starting a new game
-# Handling 3 ties in a row
+#Ending the game when someone gets to 12 or above points, and starting a new game
+# Handling 3 ties in a row, low priority
 # 11 Point Auto Truco and Truco Disablied, including giving the automatic option to fold
 # 11-11 blind hand - HIDE ALL CARD DATA FROM CLIENT, OR CHEATING WILL HAPPEN
-# Maybe playing cards upside down? Probabaly not neccesary
-#ADD CODE TO ALLOW NEW PLAYER TO JOIN AND TAKE LEFT PLAYERS POSITION
+
+
 class GameConsumer(WebsocketConsumer):
      
     # This Function will create a new player, place them on a team and then add them to the game state. Returns negative numbers on errors
@@ -259,7 +260,12 @@ class GameConsumer(WebsocketConsumer):
                     currentState["players"][playIndex + 1]["isTurn"] = True
 
                 if (len(currentState["board"]["cardsPlayed"]) == len(currentState["players"])):
-                    self.game.trickOver()
+                    trickOverCode = self.game.trickOver()
+                    #=================================== IN THE FUTURE ==================================================
+                    #Put a code here to read the trickOverCode and handle what to do. It could end it being many different codes
+                    #For example, a game over code, in which you send out the winner and as kif you want to start a new game
+                    # A blind hand code, where we wouldn't send the card values and suits
+                    # An 11 code where you automatiically call truco and disable trucos for the round.
                     async_to_sync(self.channel_layer.group_send)(
                     self.game_group_name, {"type": "game.sendState", "code": "start", "data": currentState}
                     )

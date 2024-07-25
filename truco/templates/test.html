@@ -172,10 +172,10 @@
         border: 2px solid #000;
         border-radius: 8px;
         }
-        .cardYourTurn{
+        .card.YourTurn{
         width:100%;
         max-width:80px;
-        border: 2px solid #5121ff;
+        border: 4px solid #2400a5;
         border-radius: 8px;
         }
         .cardsmall{
@@ -183,6 +183,9 @@
         max-width:40px;
         border: 1px solid #000;
         border-radius: 3px;
+        }
+        .cardsmall.winner{
+            border: 1px solid #119400;
         }
 
         .topMenus {
@@ -207,6 +210,7 @@
             font-weight: bold;
             font-size: 18px;
             display: flex;
+            justify-content: center;
             align-items: center;
             text-align: center;
             
@@ -246,6 +250,47 @@
             border-radius: 12px;
             font-weight: bold;
             font-size: 22px;
+        }
+
+                .overlayGameInfo {
+                    position: absolute;
+                    top: -100%; /* Start hidden above the game window */
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 90%;
+                    max-width: 500px;
+                    background-color: rgb(0, 141, 19); /* Semi-transparent background */
+                    color: rgb(0, 0, 0);
+                    padding: 20px;
+                    font-weight: bold;
+                    font-size: 50px;
+                    border-radius: 12px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
+                    transition: top 1.5s ease-in-out; /* Smooth slide transition */
+                    z-index: 3; /* Ensure it appears above other elements */
+        }
+
+        /* Class to slide up the overlay */
+        .overlayGameInfo.show {
+            top: 25%; /* Center it vertically within the game window */
+        }
+        .overlayGameInfo.goodMessage {
+            background-color: rgb(44, 155, 59); 
+        }
+        .overlayGameInfo.badMessage {
+            background-color: rgb(138, 26, 26); 
+        }
+
+        /* Tailwind utility class for hiding the overlay (e.g., adding a 'hidden' class) */
+        .gameHidden {
+            display: none;
+        }
+
+        .gameHeader {
+            z-index: 5;
         }
 
     </style>
@@ -313,7 +358,7 @@
       </div>
 
       <div class="flex flex-col h-screen">
-        <div class="bg-red-900 text-white flex justify-between items-center border-2 border-black p-4">
+        <div class=" gameHeader bg-red-900 text-white flex justify-between items-center border-2 border-black p-4">
             <div>LiTruco</div>
             <div>Menu Buttons Go Here</div>
         </div>
@@ -323,9 +368,24 @@
             <div class="w-1/12 bg-gray-400 flex justify-center border-2 border-black items-center">
                 AD
             </div>
-    
+
+
+            
+
+
             <!-- Main Game Area -->
+
             <div class="flex flex-col w-8/12 h-full p-4 space-y-4 border-2 border-black relative">
+
+                <!-- Overlay Div -->
+                <div id="gameMenuOverlay" class="overlayGameInfo">
+                    <p>❗❗<br>TRUCO<br>❗❗</p>
+                </div>
+
+                <script>
+                    
+                </script>
+
                 <!-- Teammate -->
                 <div class="flex flex-col items-center space-y-4">
                     <div class="placeholder flex justify-center items-center p-4">
